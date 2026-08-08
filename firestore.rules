@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /projects/{projectId} {
+      allow read, delete: if (request.auth != null && resource.data.userId == request.auth.uid) || (request.auth == null && resource.data.userId == "offline_magneto_developer");
+      allow create: if (request.auth != null && request.resource.data.userId == request.auth.uid) || (request.auth == null && request.resource.data.userId == "offline_magneto_developer");
+      allow update: if (request.auth != null && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid) || (request.auth == null && resource.data.userId == "offline_magneto_developer" && request.resource.data.userId == "offline_magneto_developer");
+    }
+
+    match /healthcheck/{docId} {
+      allow read, write: if true;
+    }
+
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    match /subscriptions/{subscriptionId} {
+      allow read, write: if true;
+    }
+
+    match /feedback/{feedbackId} {
+      allow read, write: if true;
+    }
+  }
+}

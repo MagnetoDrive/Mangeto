@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <!-- Gradient from electric violet to warm amber -->
+    <linearGradient id="magnet-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+  </defs>
+
+  <!-- Circular magnetic field lines in background -->
+  <circle cx="50" cy="50" r="45" fill="none" stroke="#7C3AED" stroke-opacity="0.15" stroke-width="1" stroke-dasharray="2, 4" />
+  <circle cx="50" cy="50" r="35" fill="none" stroke="#7C3AED" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="3, 3" />
+  <circle cx="50" cy="50" r="25" fill="none" stroke="#F59E0B" stroke-opacity="0.15" stroke-width="0.75" stroke-dasharray="1, 3" />
+
+  <!-- Magnetic field arcs around poles at the bottom -->
+  <path d="M 15,70 A 15,15 0 0,0 42,70" fill="none" stroke="#7C3AED" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="2, 2" />
+  <path d="M 58,70 A 15,15 0 0,0 85,70" fill="none" stroke="#F59E0B" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="2, 2" />
+  
+  <!-- Stylized M formed as a Horseshoe Magnet -->
+  <path d="M 22,70 L 22,45 C 22,30 35,25 42,35 C 45,39 47,42 50,42 C 53,42 55,39 58,35 C 65,25 78,30 78,45 L 78,70 Q 78,74 74,74 Q 70,74 70,70 L 70,45 C 70,38 64,36 59,42 C 55,47 53,50 50,50 C 47,50 45,47 41,42 C 36,36 30,38 30,45 L 30,70 Q 30,74 26,74 Q 22,74 22,70 Z" 
+        fill="url(#magnet-grad)" stroke="#111827" stroke-width="1" />
+
+  <!-- Magnetic poles (tips at the bottom) - Left Tip (Violet/South) -->
+  <rect x="22" y="66" width="8" height="4" fill="#FFFFFF" opacity="0.3" rx="1" />
+  <!-- Right Tip (Amber/North) -->
+  <rect x="70" y="66" width="8" height="4" fill="#FFFFFF" opacity="0.3" rx="1" />
+</svg>

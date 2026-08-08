@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "project": {
+      "title": "Project",
+      "description": "A generated or saved magnetic outreach campaign design project",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "concept": { "type": "string" },
+        "audience": { "type": "string" },
+        "outcome": { "type": "string" },
+        "platform": { "type": "string" },
+        "length": { "type": "string" },
+        "tone": { "type": "string" },
+        "hooks": { "type": "array" },
+        "selectedHookId": { "type": "string" },
+        "script": { "type": "object" },
+        "scenes": { "type": "array" },
+        "marketing": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "concept", "audience", "outcome", "createdAt"]
+    },
+    "user": {
+      "title": "User",
+      "description": "An application user",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastActive": { "type": "string", "format": "date-time" },
+        "planStatus": { "type": "string" }
+      },
+      "required": ["uid", "createdAt", "lastActive", "planStatus"]
+    },
+    "subscription": {
+      "title": "Subscription",
+      "description": "User subscription detail from Lemon Squeezy",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "plan": { "type": "string" },
+        "status": { "type": "string" },
+        "renewalDate": { "type": "string" }
+      },
+      "required": ["id", "plan", "status"]
+    },
+    "feedback": {
+      "title": "Feedback",
+      "description": "User feedback messages",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "user": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "user", "message"]
+    }
+  },
+  "firestore": {
+    "projects": {
+      "schema": { "$ref": "#/entities/project" },
+      "description": "Collection of campaign templates, script formulas, and visual scenes."
+    },
+    "users": {
+      "schema": { "$ref": "#/entities/user" },
+      "description": "Collection of registered application users."
+    },
+    "subscriptions": {
+      "schema": { "$ref": "#/entities/subscription" },
+      "description": "Collection of active and past subscriptions."
+    },
+    "feedback": {
+      "schema": { "$ref": "#/entities/feedback" },
+      "description": "Collection of user feedback messages."
+    }
+  }
+}
