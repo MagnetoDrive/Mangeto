@@ -1051,6 +1051,9 @@ export default function App() {
           <div className="flex flex-wrap items-center justify-center gap-6">
             <button onClick={() => navigateTo('privacy')} className="hover:text-indigo-400 font-medium transition cursor-pointer">Privacy Policy</button>
             <button onClick={() => navigateTo('terms')} className="hover:text-indigo-400 font-medium transition cursor-pointer">User Agreement</button>
+            <button onClick={() => setIsHireOpen(true)} className="hover:text-emerald-400 font-bold transition cursor-pointer flex items-center gap-1">
+              Pricing ($450 Flat)
+            </button>
             <button onClick={() => setIsHireOpen(true)} className="hover:text-purple-400 font-bold transition cursor-pointer">Hire Developer</button>
             {ENABLE_ADMIN && (
               <button 

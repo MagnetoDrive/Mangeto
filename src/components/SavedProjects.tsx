@@ -1,5 +1,5 @@
 import React from "react";
-import { Clock, Trash2, ArrowRight, Video, Copy, HelpCircle, Briefcase } from "lucide-react";
+import { Clock, Trash2, ArrowRight, Video, Copy, HelpCircle, Briefcase, CreditCard } from "lucide-react";
 import { Project } from "../types";
 
 interface SavedProjectsProps {
@@ -49,12 +49,12 @@ export default function SavedProjects({
 
           <button
             onClick={onHireDeveloper}
-            className="px-3 py-1.5 bg-purple-900/40 hover:bg-purple-900/60 text-purple-300 hover:text-purple-200 rounded-md text-xs font-semibold border border-purple-800/60 transition flex items-center gap-1 shrink-0 cursor-pointer"
+            className="px-3 py-1.5 bg-gradient-to-r from-purple-900/50 to-indigo-900/50 hover:from-purple-900/70 hover:to-indigo-900/70 text-purple-200 hover:text-white rounded-md text-xs font-semibold border border-purple-700/50 transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
             id="btn_header_hire_developer"
-            title="Hire Developer Tsepo Motsatse"
+            title="Hire Developer Tsepo Motsatse ($450 Flat Rate)"
           >
-            <Briefcase className="w-3.5 h-3.5" />
-            Hire Developer
+            <Briefcase className="w-3.5 h-3.5 text-purple-300" />
+            <span>Hire Developer</span>
           </button>
 
           <button
