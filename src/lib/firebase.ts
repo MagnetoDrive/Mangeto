@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously } from "firebase/auth";
-import { initializeFirestore, doc, setDoc, setLogLevel } from "firebase/firestore";
+import { initializeFirestore, doc, setDoc, setLogLevel, memoryLocalCache } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Keep setLogLevel at "warn" in development so real warnings/errors are visible
@@ -23,6 +23,7 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
+  localCache: memoryLocalCache(),
 }, databaseId);
 export const storage = getStorage(app);
 

@@ -3,9 +3,13 @@ class SafeStorage {
 
   getItem(key: string): string | null {
     try {
-      return typeof window !== "undefined" && window.localStorage ? window.localStorage.getItem(key) : null;
+      if (typeof window !== "undefined" && window.localStorage) {
+        const value = window.localStorage.getItem(key);
+        if (value !== null) return value;
+      }
+      return this.memoryStore[key] || null;
     } catch (e) {
-      console.warn("Storage access denied, using in-memory fallback", e);
+      console.warn("Storage access issue, using in-memory fallback:", e);
       return this.memoryStore[key] || null;
     }
   }
@@ -18,8 +22,14 @@ class SafeStorage {
         this.memoryStore[key] = value;
       }
     } catch (e) {
-      console.warn("Storage access denied, using in-memory fallback", e);
+      console.warn("LocalStorage quota or disk space exceeded, gracefully falling back to in-memory store:", e);
       this.memoryStore[key] = value;
+      // Best-effort cleanup of non-critical items if disk space / quota error occurred
+      try {
+        if (typeof window !== "undefined" && window.localStorage && key !== "magneto_projects") {
+          window.localStorage.removeItem("magneto_projects");
+        }
+      } catch (_) {}
     }
   }
 
@@ -27,12 +37,22 @@ class SafeStorage {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
         window.localStorage.removeItem(key);
-      } else {
-        delete this.memoryStore[key];
       }
-    } catch (e) {
-      console.warn("Storage access denied, using in-memory fallback", e);
       delete this.memoryStore[key];
+    } catch (e) {
+      console.warn("Storage access issue, removing from in-memory store:", e);
+      delete this.memoryStore[key];
+    }
+  }
+
+  clear(): void {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.clear();
+      }
+      this.memoryStore = {};
+    } catch (e) {
+      this.memoryStore = {};
     }
   }
 }

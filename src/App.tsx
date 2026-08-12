@@ -11,6 +11,7 @@ import LaunchDeployView from "./components/LaunchDeployView";
 import CompanionChat from "./components/CompanionChat";
 import TutorialWizard from "./components/TutorialWizard";
 import { auth, initializeAnonymousSession, db } from "./lib/firebase";
+import { subscribeToAuth, signOutUser, syncUserProfile } from "./lib/auth";
 import { fetchUserProjects, saveProjectToFirestore, deleteProjectFromFirestore } from "./lib/db";
 import { safeStorage } from "./lib/storage";
 import { setDoc, doc } from "firebase/firestore";
@@ -21,6 +22,8 @@ import PrivacyPage from "./pages/privacy";
 import TermsPage from "./pages/terms";
 import HireDeveloperModal from "./components/HireDeveloperModal";
 import FeedbackWidget from "./components/FeedbackWidget";
+import PricingLandingView from "./components/PricingLandingView";
+import AuthModal from "./components/AuthModal";
 
 const ENABLE_ADMIN = true;
 
@@ -40,18 +43,26 @@ export default function App() {
   const [userId, setUserId] = useState<string | null>(null);
 
   // Active page routing and modal states
-  const [activePage, setActivePage] = useState<'main' | 'admin' | 'privacy' | 'terms'>(() => {
+  const [activePage, setActivePage] = useState<'main' | 'admin' | 'privacy' | 'terms' | 'pricing'>(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname;
       if (path === "/admin") return "admin";
       if (path === "/privacy") return "privacy";
       if (path === "/terms") return "terms";
+      if (path === "/pricing") return "pricing";
     }
     return "main";
   });
   const [isHireOpen, setIsHireOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+    isAnonymous: boolean;
+  } | null>(null);
 
-  const navigateTo = (page: 'main' | 'admin' | 'privacy' | 'terms') => {
+  const navigateTo = (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing') => {
     setActivePage(page);
     if (typeof window !== 'undefined') {
       const newPath = page === 'main' ? '/' : `/${page}`;
@@ -65,6 +76,7 @@ export default function App() {
       if (path === '/admin') setActivePage('admin');
       else if (path === '/privacy') setActivePage('privacy');
       else if (path === '/terms') setActivePage('terms');
+      else if (path === '/pricing') setActivePage('pricing');
       else setActivePage('main');
     };
     window.addEventListener('popstate', handlePopState);
@@ -99,110 +111,97 @@ export default function App() {
     }
   }, []);
 
-  // Past project templates recovery with Firebase sync and automatic one-time migration
+  // Past project templates recovery with Firebase sync and auth state listener
   useEffect(() => {
-    initializeAnonymousSession(async (uid) => {
-      setUserId(uid);
+    const unsubscribe = subscribeToAuth(async (user) => {
+      if (user) {
+        const profile = await syncUserProfile(user);
+        setCurrentUser({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || profile.displayName,
+          isAnonymous: user.isAnonymous
+        });
+        setUserId(user.uid);
 
-      // Register or update user logging in Firestore
-      try {
-        await setDoc(doc(db, "users", uid), {
-          uid,
-          email: auth.currentUser?.email || "",
-          createdAt: new Date().toISOString(),
-          lastActive: new Date().toISOString(),
-          planStatus: "Free"
-        }, { merge: true });
-      } catch (err) {
-        console.warn("User logging skipped (rules or network offline)", err);
-      }
-      
-      // Load local cache immediately for instant-rendering/offline speed
-      const saved = safeStorage.getItem("magneto_projects");
-      let cachedProjects: Project[] = [];
-      if (saved) {
+        // Sync with cloud database in background
         try {
-          cachedProjects = JSON.parse(saved);
-          setProjects(cachedProjects);
-          if (cachedProjects.length > 0) {
-            loadProject(cachedProjects[0]);
+          const firestoreProjects = await fetchUserProjects(user.uid);
+          const saved = safeStorage.getItem("magneto_projects");
+          let cachedProjects: Project[] = [];
+          if (saved) {
+            try { cachedProjects = JSON.parse(saved); } catch (_) {}
           }
-        } catch (err) {
-          console.error("Failed to recover past pitches from local Cache", err);
-        }
-      }
 
-      // Sync with cloud database in background
-      try {
-        const firestoreProjects = await fetchUserProjects(uid);
-        
-        if (firestoreProjects.length > 0) {
-          setProjects(firestoreProjects);
-          loadProject(firestoreProjects[0]);
-          safeStorage.setItem("magneto_projects", JSON.stringify(firestoreProjects));
-        } else if (cachedProjects.length > 0) {
-          // Local projects exist but Firestore is empty -> Migrate them to Firebase
-          setSuccessMessage("Secured fallback: Syncing your local pitches to your Cloud Firebase account...");
-          setTimeout(() => setSuccessMessage(null), 4000);
-          
-          for (const p of cachedProjects) {
-            await saveProjectToFirestore(uid, p);
+          if (firestoreProjects.length > 0) {
+            setProjects(firestoreProjects);
+            loadProject(firestoreProjects[0]);
+            safeStorage.setItem("magneto_projects", JSON.stringify(firestoreProjects));
+          } else if (cachedProjects.length > 0) {
+            // Local projects exist but Firestore is empty -> Migrate them to Firebase
+            for (const p of cachedProjects) {
+              await saveProjectToFirestore(user.uid, p);
+            }
+            const reloaded = await fetchUserProjects(user.uid);
+            if (reloaded.length > 0) {
+              setProjects(reloaded);
+              loadProject(reloaded[0]);
+              safeStorage.setItem("magneto_projects", JSON.stringify(reloaded));
+            }
+          } else {
+            // No cache AND no cloud data -> Load demo
+            const demo: Project = {
+              id: "demo_1",
+              name: "SaaS Manual Automator",
+              concept: "A SaaS tool that creates visual step-by-step user manuals directly from raw video records of screens.",
+              audience: "Startup founders, product managers, customer success leads",
+              outcome: "Reduce CS tickets by 60% and save product teams 8 hours per release manual.",
+              platform: "9:16",
+              length: "60s",
+              tone: "Direct Response Copywriter (Bold & Evidence-Backed)",
+              createdAt: new Date().toISOString(),
+              hooks: [
+                {
+                  id: "h_demo_1",
+                  type: "Problem",
+                  text: "Stop wasting 8 hours writing manuals nobody actually reads.",
+                  score: 95,
+                  explanation: "Directly mirrors user pain point while introducing high metric cost."
+                },
+                {
+                  id: "h_demo_2",
+                  type: "Curiosity Gap",
+                  text: "How top startups resolved 60% of tickets with zero help docs.",
+                  score: 91,
+                  explanation: "Incentivizes clicks by contrasting high support with zero documentation."
+                },
+                {
+                  id: "h_demo_3",
+                  type: "Story",
+                  text: "My product lead quit writing word manuals. Support tickets collapsed.",
+                  score: 87,
+                  explanation: "First person perspective establishes real-world professional authority."
+                }
+              ]
+            };
+            await saveProjectToFirestore(user.uid, demo);
+            const initialList = [demo];
+            setProjects(initialList);
+            loadProject(demo);
+            safeStorage.setItem("magneto_projects", JSON.stringify(initialList));
           }
-          const reloaded = await fetchUserProjects(uid);
-          if (reloaded.length > 0) {
-            setProjects(reloaded);
-            loadProject(reloaded[0]);
-            safeStorage.setItem("magneto_projects", JSON.stringify(reloaded));
-          }
-        } else {
-          // No cache AND no cloud data -> Load demo
-          const demo: Project = {
-            id: "demo_1",
-            name: "SaaS Manual Automator",
-            concept: "A SaaS tool that creates visual step-by-step user manuals directly from raw video records of screens.",
-            audience: "Startup founders, product managers, customer success leads",
-            outcome: "Reduce CS tickets by 60% and save product teams 8 hours per release manual.",
-            platform: "9:16",
-            length: "60s",
-            tone: "Direct Response Copywriter (Bold & Evidence-Backed)",
-            createdAt: new Date().toISOString(),
-            hooks: [
-              {
-                id: "h_demo_1",
-                type: "Problem",
-                text: "Stop wasting 8 hours writing manuals nobody actually reads.",
-                score: 95,
-                explanation: "Directly mirrors user pain point while introducing high metric cost."
-              },
-              {
-                id: "h_demo_2",
-                type: "Curiosity Gap",
-                text: "How top startups resolved 60% of tickets with zero help docs.",
-                score: 91,
-                explanation: "Incentivizes clicks by contrasting high support with zero documentation."
-              },
-              {
-                id: "h_demo_3",
-                type: "Story",
-                text: "My product lead quit writing word manuals. Support tickets collapsed.",
-                score: 87,
-                explanation: "First person perspective establishes real-world professional authority."
-              }
-            ]
-          };
-          await saveProjectToFirestore(uid, demo);
-          const initialList = [demo];
-          setProjects(initialList);
-          loadProject(demo);
-          safeStorage.setItem("magneto_projects", JSON.stringify(initialList));
+        } catch (syncErr) {
+          console.warn("Background Firebase synchronization delayed.", syncErr);
         }
-      } catch (syncErr) {
-        console.warn("Background Firebase synchronization delayed. Running in fully functional offline mode.", syncErr);
+      } else {
+        setCurrentUser(null);
+        initializeAnonymousSession((uid) => {
+          setUserId(uid);
+        });
       }
-    }, (error) => {
-      setErrorMessage("Enable Anonymous auth in Firebase Console");
-      setAuthToast("Enable Anonymous auth in Firebase Console");
     });
+
+    return () => unsubscribe();
   }, []);
 
   const saveProjectsToStore = async (allProjects: Project[], forceSaveProject?: Project) => {
@@ -653,6 +652,18 @@ export default function App() {
   if (activePage === 'terms') {
     return <TermsPage onBack={() => navigateTo('main')} />;
   }
+  if (activePage === 'pricing') {
+    return (
+      <PricingLandingView
+        onBackToApp={() => navigateTo('main')}
+        onHireDeveloper={() => setIsHireOpen(true)}
+        onSelectFreePitch={(freeConcept) => {
+          if (freeConcept) setConcept(freeConcept);
+          navigateTo('main');
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white antialiased pb-24 md:pb-0">
@@ -666,6 +677,14 @@ export default function App() {
         onNewProject={handleNewProject}
         onLaunchTutorial={() => setIsTutorialOpen(true)}
         onHireDeveloper={() => setIsHireOpen(true)}
+        onOpenPricing={() => navigateTo('pricing')}
+        currentUser={currentUser}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onSignOut={async () => {
+          await signOutUser();
+          setSuccessMessage("Successfully signed out of your account.");
+          setTimeout(() => setSuccessMessage(null), 3000);
+        }}
       />
 
       <div className="max-w-7xl mx-auto px-4 py-6 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
@@ -1051,10 +1070,10 @@ export default function App() {
           <div className="flex flex-wrap items-center justify-center gap-6">
             <button onClick={() => navigateTo('privacy')} className="hover:text-indigo-400 font-medium transition cursor-pointer">Privacy Policy</button>
             <button onClick={() => navigateTo('terms')} className="hover:text-indigo-400 font-medium transition cursor-pointer">User Agreement</button>
-            <button onClick={() => setIsHireOpen(true)} className="hover:text-emerald-400 font-bold transition cursor-pointer flex items-center gap-1">
-              Pricing ($450 Flat)
+            <button onClick={() => navigateTo('pricing')} className="hover:text-indigo-400 font-bold transition cursor-pointer flex items-center gap-1">
+              Pricing & MOR (2 Free)
             </button>
-            <button onClick={() => setIsHireOpen(true)} className="hover:text-purple-400 font-bold transition cursor-pointer">Hire Developer</button>
+            <button onClick={() => setIsHireOpen(true)} className="hover:text-purple-400 font-bold transition cursor-pointer">Hire Developer ($450)</button>
             {ENABLE_ADMIN && (
               <button 
                 onClick={() => navigateTo('admin')} 
@@ -1074,6 +1093,15 @@ export default function App() {
       <HireDeveloperModal 
         isOpen={isHireOpen} 
         onClose={() => setIsHireOpen(false)} 
+      />
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onAuthSuccess={(email) => {
+          setSuccessMessage(`Welcome! Successfully authenticated as ${email}`);
+          setTimeout(() => setSuccessMessage(null), 4000);
+        }}
       />
     </div>
   );
