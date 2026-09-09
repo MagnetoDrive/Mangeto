@@ -30,6 +30,7 @@ export interface StoryboardScene {
   onScreenText: string;
   avatarDirection: string;
   audioDescription: string;
+  imageUrl?: string;
 }
 
 export interface LandingPageHero {

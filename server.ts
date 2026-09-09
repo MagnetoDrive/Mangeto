@@ -19,6 +19,11 @@ app.use(express.json({
   }
 }));
 
+// API Health Check
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", service: "Magneto" });
+});
+
 // Lazy-loaded Gemini AI client
 let _ai: GoogleGenAI | null = null;
 function getGeminiClient(): GoogleGenAI {
@@ -79,12 +84,11 @@ function formatErrorMessage(error: any): string {
 // Robust helpers to handle 503 / high demand capacity spikes across Gemini models with retries & model fallbacks
 async function generateContentWithFallback(ai: GoogleGenAI, options: any) {
   const modelsToTry = [
-    options.model || "gemini-3.6-flash",
-    "gemini-3.6-flash",
-    "gemini-2.5-flash",
-    "gemini-1.5-flash",
-    "gemini-2.5-pro",
-    "gemini-flash-latest"
+    options.model || "gemini-3.1-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+    "gemini-3.8-flash",
+    "gemini-2.5-pro"
   ];
   const uniqueModels = Array.from(new Set(modelsToTry));
 
@@ -94,7 +98,7 @@ async function generateContentWithFallback(ai: GoogleGenAI, options: any) {
     try {
       if (i > 0) {
         console.warn(`[Gemini Fallback] Retrying request with model fallback: ${modelName} (attempt ${i + 1})`);
-        await new Promise(r => setTimeout(r, 400 * i));
+        await new Promise(r => setTimeout(r, 250 * i));
       }
       return await ai.models.generateContent({
         ...options,
@@ -103,21 +107,7 @@ async function generateContentWithFallback(ai: GoogleGenAI, options: any) {
     } catch (err: any) {
       lastError = err;
       console.warn(`[Gemini Model Error on ${modelName}]:`, err?.message || err);
-      // Try next model on capacity, 404, 429, 503, or service errors
-      const errMessage = String(err?.message || err);
-      const isRetryable = 
-        errMessage.includes("503") || 
-        errMessage.includes("404") ||
-        errMessage.includes("429") ||
-        errMessage.includes("NOT_FOUND") ||
-        errMessage.includes("UNAVAILABLE") || 
-        errMessage.includes("high demand") || 
-        errMessage.includes("overloaded") || 
-        errMessage.includes("RESOURCE_EXHAUSTED");
-        
-      if (!isRetryable) {
-        throw err;
-      }
+      // Continue to next available fallback model in list
     }
   }
   throw lastError;
@@ -125,12 +115,11 @@ async function generateContentWithFallback(ai: GoogleGenAI, options: any) {
 
 async function generateContentStreamWithFallback(ai: GoogleGenAI, options: any) {
   const modelsToTry = [
-    options.model || "gemini-3.6-flash",
-    "gemini-3.6-flash",
-    "gemini-2.5-flash",
-    "gemini-1.5-flash",
-    "gemini-2.5-pro",
-    "gemini-flash-latest"
+    options.model || "gemini-3.1-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+    "gemini-3.8-flash",
+    "gemini-2.5-pro"
   ];
   const uniqueModels = Array.from(new Set(modelsToTry));
 
@@ -140,7 +129,7 @@ async function generateContentStreamWithFallback(ai: GoogleGenAI, options: any) 
     try {
       if (i > 0) {
         console.warn(`[Gemini Stream Fallback] Retrying stream request with model fallback: ${modelName} (attempt ${i + 1})`);
-        await new Promise(r => setTimeout(r, 400 * i));
+        await new Promise(r => setTimeout(r, 250 * i));
       }
       return await ai.models.generateContentStream({
         ...options,
@@ -149,20 +138,6 @@ async function generateContentStreamWithFallback(ai: GoogleGenAI, options: any) 
     } catch (err: any) {
       lastError = err;
       console.warn(`[Gemini Stream Model Error on ${modelName}]:`, err?.message || err);
-      const errMessage = String(err?.message || err);
-      const isRetryable = 
-        errMessage.includes("503") || 
-        errMessage.includes("404") ||
-        errMessage.includes("429") ||
-        errMessage.includes("NOT_FOUND") ||
-        errMessage.includes("UNAVAILABLE") || 
-        errMessage.includes("high demand") || 
-        errMessage.includes("overloaded") || 
-        errMessage.includes("RESOURCE_EXHAUSTED");
-        
-      if (!isRetryable) {
-        throw err;
-      }
     }
   }
   throw lastError;
@@ -219,7 +194,7 @@ CRITICAL GUIDELINES FOR HOOKS:
 `;
 
     const response = await generateContentWithFallback(ai, {
-      model: "gemini-3.6-flash",
+      model: "gemini-3.1-flash-lite",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -280,6 +255,73 @@ CRITICAL GUIDELINES FOR HOOKS:
     res.json({ hooks: fallbackHooks });
   }
 });
+
+function buildFallbackPayload(concept: string, audience: string, outcome: string, duration: number, hookText: string) {
+  return {
+    script: {
+      title: `${concept} - High Converting Script`,
+      spokenSeconds: duration,
+      scriptText: `[PAUSE] ${hookText} [EMPHASIS] Most ${audience} spend hours struggling with inefficient steps that drag down output. With our proven framework, you can ${outcome} automatically. [PAUSE] Here's how it works: step one eliminates friction, step two optimizes conversion rates, and step three locks in sustainable growth. [EMPHASIS] Don't wait—click the link below and transform your business today!`,
+      wordCount: 68,
+      readingGrade: "6th Grade",
+      structuredSegments: [
+        { time: "0s - 10s", label: "Hook", text: hookText },
+        { time: "10s - 25s", label: "Problem", text: `Most ${audience} spend hours struggling with inefficient steps that drag down output.` },
+        { time: "25s - 45s", label: "Solution", text: `With our proven framework, you can ${outcome} automatically.` },
+        { time: "45s - 60s", label: "CTA", text: "Don't wait—click below and transform your results today!" }
+      ]
+    },
+    scenes: [
+      {
+        id: "sc_1",
+        timestamp: "0s - 10s",
+        visualPrompt: `${concept} founder looking focused at workspace screen, close-up shot, style: consistent brand`,
+        onScreenText: "STOP WASTING TIME",
+        avatarDirection: "Points directly at camera with urgent, engaging posture.",
+        audioDescription: "Upbeat energetic tone with subtle synth bass."
+      },
+      {
+        id: "sc_2",
+        timestamp: "10s - 25s",
+        visualPrompt: `sleek modern dashboard interface showing workflow analytics, over the shoulder angle, style: consistent brand`,
+        onScreenText: "THE BOTTLENECK",
+        avatarDirection: "Gestures towards monitor screen highlighting key metric.",
+        audioDescription: "Smooth rhythmic background music."
+      },
+      {
+        id: "sc_3",
+        timestamp: "25s - 45s",
+        visualPrompt: `vibrant digital report showing rising growth chart, macro focus shot, style: consistent brand`,
+        onScreenText: "AUTOMATED RESULTS",
+        avatarDirection: "Smiles confidently while presenting solution.",
+        audioDescription: "Rising chime sound effect."
+      },
+      {
+        id: "sc_4",
+        timestamp: "45s - 60s",
+        visualPrompt: `bold clean final call to action interface with button, eye level cinematic focus, style: consistent brand`,
+        onScreenText: "GET STARTED NOW",
+        avatarDirection: "Nods warmly, guiding viewer to click link.",
+        audioDescription: "Upbeat crescendo transition."
+      }
+    ],
+    marketing: {
+      linkedin: `🚀 Struggling with ${concept}?\n\nHere is how ${audience} are achieving ${outcome}:\n\n1. Eliminating friction points\n2. Automating daily execution\n3. Focusing purely on high-leverage outputs\n\nTry Magneto today and transform your content engine!`,
+      twitterThread: [
+        `1/ Why ${concept} might be slowing you down (and how to fix it): 🧵`,
+        `2/ Most ${audience} focus on manual tasks. But automated workflows deliver ${outcome}.`,
+        `3/ Ready to level up? Check out Magneto and generate high-converting scripts in seconds!`
+      ],
+      coldEmail: `Subject: Quick question about ${concept}\n\nHi {{FirstName}},\n\nI noticed you are leading operations at {{Company}}. Most ${audience} spend hours managing manual setup.\n\nWe built a solution that helps you ${outcome} effortlessly.\n\nWould you be open to a 2-minute quick look this week?\n\nBest,\nMagneto Team`,
+      landingPageHero: {
+        heading: `Transform ${concept} into High-Converting Output`,
+        subheading: `Help ${audience} ${outcome} in record time.`,
+        cta: "Get Started Free"
+      },
+      youtubeDescription: `Discover how ${concept} empowers ${audience} to ${outcome}. Watch the full breakdown and get started now!`
+    }
+  };
+}
 
 // 2. ENDPOINT: Expand selected hook into Script, Video Shot List/Storyboard, and Marketing Kit
 app.post("/api/generate-script-and-plan", async (req, res) => {
@@ -390,174 +432,177 @@ Return exactly configured outputs in JSON following this JSON Schema:
 }
 `;
 
-    const responseStream = await generateContentStreamWithFallback(ai, {
-      model: "gemini-3.6-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
+    const schemaConfig = {
+      type: Type.OBJECT,
+      properties: {
+        script: {
           type: Type.OBJECT,
           properties: {
-            script: {
-              type: Type.OBJECT,
-              properties: {
-                title: { type: Type.STRING },
-                spokenSeconds: { type: Type.INTEGER },
-                scriptText: { type: Type.STRING },
-                wordCount: { type: Type.INTEGER },
-                readingGrade: { type: Type.STRING },
-                structuredSegments: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      time: { type: Type.STRING },
-                      label: { type: Type.STRING },
-                      text: { type: Type.STRING }
-                    },
-                    required: ["time", "label", "text"]
-                  }
-                }
-              },
-              required: ["title", "spokenSeconds", "scriptText", "wordCount", "readingGrade", "structuredSegments"]
-            },
-            scenes: {
+            title: { type: Type.STRING },
+            spokenSeconds: { type: Type.INTEGER },
+            scriptText: { type: Type.STRING },
+            wordCount: { type: Type.INTEGER },
+            readingGrade: { type: Type.STRING },
+            structuredSegments: {
               type: Type.ARRAY,
               items: {
                 type: Type.OBJECT,
                 properties: {
-                  id: { type: Type.STRING },
-                  timestamp: { type: Type.STRING },
-                  visualPrompt: { type: Type.STRING },
-                  onScreenText: { type: Type.STRING },
-                  avatarDirection: { type: Type.STRING },
-                  audioDescription: { type: Type.STRING }
+                  time: { type: Type.STRING },
+                  label: { type: Type.STRING },
+                  text: { type: Type.STRING }
                 },
-                required: ["id", "timestamp", "visualPrompt", "onScreenText", "avatarDirection", "audioDescription"]
+                required: ["time", "label", "text"]
               }
-            },
-            marketing: {
-              type: Type.OBJECT,
-              properties: {
-                linkedin: { type: Type.STRING },
-                twitterThread: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING }
-                },
-                coldEmail: { type: Type.STRING },
-                landingPageHero: {
-                  type: Type.OBJECT,
-                  properties: {
-                    heading: { type: Type.STRING },
-                    subheading: { type: Type.STRING },
-                    cta: { type: Type.STRING }
-                  },
-                  required: ["heading", "subheading", "cta"]
-                },
-                youtubeDescription: { type: Type.STRING }
-              },
-              required: ["linkedin", "twitterThread", "coldEmail", "landingPageHero", "youtubeDescription"]
             }
           },
-          required: ["script", "scenes", "marketing"]
+          required: ["title", "spokenSeconds", "scriptText", "wordCount", "readingGrade", "structuredSegments"]
+        },
+        scenes: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              id: { type: Type.STRING },
+              timestamp: { type: Type.STRING },
+              visualPrompt: { type: Type.STRING },
+              onScreenText: { type: Type.STRING },
+              avatarDirection: { type: Type.STRING },
+              audioDescription: { type: Type.STRING }
+            },
+            required: ["id", "timestamp", "visualPrompt", "onScreenText", "avatarDirection", "audioDescription"]
+          }
+        },
+        marketing: {
+          type: Type.OBJECT,
+          properties: {
+            linkedin: { type: Type.STRING },
+            twitterThread: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            coldEmail: { type: Type.STRING },
+            landingPageHero: {
+              type: Type.OBJECT,
+              properties: {
+                heading: { type: Type.STRING },
+                subheading: { type: Type.STRING },
+                cta: { type: Type.STRING }
+              },
+              required: ["heading", "subheading", "cta"]
+            },
+            youtubeDescription: { type: Type.STRING }
+          },
+          required: ["linkedin", "twitterThread", "coldEmail", "landingPageHero", "youtubeDescription"]
+        }
+      },
+      required: ["script", "scenes", "marketing"]
+    };
+
+    let streamedSuccessfully = false;
+    let fullText = "";
+
+    // 1. Try real-time streaming with fast gemini-3.1-flash-lite
+    try {
+      const responseStream = await ai.models.generateContentStream({
+        model: "gemini-3.1-flash-lite",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: schemaConfig
+        }
+      });
+
+      const iterator = responseStream[Symbol.asyncIterator]();
+      const firstChunk = await iterator.next();
+
+      if (!firstChunk.done) {
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        res.setHeader("Transfer-Encoding", "chunked");
+
+        const firstText = firstChunk.value?.text || "";
+        fullText += firstText;
+        res.write(firstText);
+
+        while (true) {
+          const { done, value } = await iterator.next();
+          if (done) break;
+          const chunkText = value?.text || "";
+          fullText += chunkText;
+          res.write(chunkText);
+        }
+        res.end();
+        streamedSuccessfully = true;
+
+        try {
+          const jsonText = cleanJsonString(fullText);
+          const parsed = JSON.parse(jsonText);
+          setCache(scriptCache, cacheKey, parsed);
+        } catch (parseErr) {
+          console.warn("Stream parsing note for cache:", parseErr);
         }
       }
-    });
-
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("Transfer-Encoding", "chunked");
-
-    let fullText = "";
-    for await (const chunk of responseStream) {
-      const textChunk = chunk.text || "";
-      fullText += textChunk;
-      res.write(textChunk);
-    }
-    res.end();
-
-    try {
-      const jsonText = cleanJsonString(fullText);
-      const parsed = JSON.parse(jsonText);
-      setCache(scriptCache, cacheKey, parsed);
-    } catch (parseErr: any) {
-      console.warn("Parsing stream results failed, cannot cache output:", parseErr.message);
+    } catch (streamErr: any) {
+      console.warn("[Stream initialization notice, falling back to reliable generation]:", streamErr?.message || streamErr);
     }
 
-    const latency = Date.now() - startTime;
-    console.log(`[Cache Miss] [Module generate-script-and-plan] Stream completed in ${latency}ms`);
+    if (streamedSuccessfully) {
+      const latency = Date.now() - startTime;
+      console.log(`[Cache Miss] [Module generate-script-and-plan] Stream completed in ${latency}ms`);
+      return;
+    }
+
+    // 2. Reliable Fallback Generation (non-streaming with multi-model failover)
+    if (!res.headersSent) {
+      try {
+        const response = await generateContentWithFallback(ai, {
+          model: "gemini-3.1-flash-lite",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: schemaConfig
+          }
+        });
+
+        const jsonText = cleanJsonString(response.text || "");
+        const parsed = JSON.parse(jsonText);
+        setCache(scriptCache, cacheKey, parsed);
+
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        const payloadStr = JSON.stringify(parsed);
+        const chunkSize = 120;
+        for (let i = 0; i < payloadStr.length; i += chunkSize) {
+          res.write(payloadStr.slice(i, i + chunkSize));
+        }
+        res.end();
+
+        const latency = Date.now() - startTime;
+        console.log(`[Module generate-script-and-plan] Fallback generation completed in ${latency}ms`);
+        return;
+      } catch (genErr: any) {
+        console.warn("[Fallback generation exhausted, serving guaranteed structured template]:", genErr?.message || genErr);
+      }
+    }
+
+    // 3. Guaranteed High-Converting Template Deliverable
+    if (!res.headersSent) {
+      const fallbackPayload = buildFallbackPayload(concept, audience, outcome, duration, hookText);
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.write(JSON.stringify(fallbackPayload));
+      res.end();
+    } else {
+      res.end();
+    }
   } catch (error: any) {
-    console.error("Generate script and plan error:", error);
+    console.error("Generate script and plan critical catch:", error);
     if (!res.headersSent) {
       const concept = req.body?.concept || "Your Product";
       const audience = req.body?.audience || "target audience";
       const outcome = req.body?.outcome || "scale results";
       const duration = req.body?.lengthInSeconds || 60;
       const hookText = req.body?.hookText || `Why ${concept} is the ultimate solution.`;
+      const fallbackPayload = buildFallbackPayload(concept, audience, outcome, duration, hookText);
 
-      const fallbackPayload = {
-        script: {
-          title: `${concept} - High Converting Script`,
-          spokenSeconds: duration,
-          scriptText: `[PAUSE] ${hookText} [EMPHASIS] Most ${audience} spend hours struggling with inefficient steps. But with our proven framework, you can ${outcome} automatically. [PAUSE] Here's how it works: step one eliminates friction, step two optimizes conversions, and step three locks in sustainable growth. [EMPHASIS] Don't wait—click below and transform your results today!`,
-          wordCount: 65,
-          readingGrade: "6th Grade",
-          structuredSegments: [
-            { time: "0s - 10s", label: "Hook", text: hookText },
-            { time: "10s - 25s", label: "Problem", text: `Most ${audience} spend hours struggling with inefficient steps that drag down output.` },
-            { time: "25s - 45s", label: "Solution", text: `With our proven framework, you can ${outcome} automatically.` },
-            { time: "45s - 60s", label: "CTA", text: "Don't wait—click below and transform your results today!" }
-          ]
-        },
-        scenes: [
-          {
-            id: "sc_1",
-            timestamp: "0s - 10s",
-            visualPrompt: `${concept} founder looking focused at workspace screen, close-up shot, style: consistent brand`,
-            onScreenText: "STOP WASTING TIME",
-            avatarDirection: "Points directly at camera with urgent, engaging posture.",
-            audioDescription: "Upbeat energetic tone with subtle synth bass."
-          },
-          {
-            id: "sc_2",
-            timestamp: "10s - 25s",
-            visualPrompt: `sleek modern dashboard interface showing workflow analytics, over the shoulder angle, style: consistent brand`,
-            onScreenText: "THE BOTTLENECK",
-            avatarDirection: "Gestures towards monitor screen highlighting key metric.",
-            audioDescription: "Smooth rhythmic background music."
-          },
-          {
-            id: "sc_3",
-            timestamp: "25s - 45s",
-            visualPrompt: `vibrant digital report showing rising growth chart, macro focus shot, style: consistent brand`,
-            onScreenText: "AUTOMATED RESULTS",
-            avatarDirection: "Smiles confidently while presenting solution.",
-            audioDescription: "Rising chime sound effect."
-          },
-          {
-            id: "sc_4",
-            timestamp: "45s - 60s",
-            visualPrompt: `bold clean final call to action interface with button, eye level cinematic focus, style: consistent brand`,
-            onScreenText: "GET STARTED NOW",
-            avatarDirection: "Nods warmly, guiding viewer to click link.",
-            audioDescription: "Upbeat crescendo transition."
-          }
-        ],
-        marketing: {
-          linkedin: `🚀 Struggling with ${concept}?\n\nHere is how ${audience} are achieving ${outcome}:\n\n1. Eliminating friction points\n2. Automating daily execution\n3. Focusing purely on high-leverage outputs\n\nTry Magneto today and transform your content engine!`,
-          twitterThread: [
-            `1/ Why ${concept} might be slowing you down (and how to fix it): 🧵`,
-            `2/ Most ${audience} focus on manual tasks. But automated workflows deliver ${outcome}.`,
-            `3/ Ready to level up? Check out Magneto and generate high-converting scripts in seconds!`
-          ],
-          coldEmail: `Subject: Quick question about ${concept}\n\nHi {{FirstName}},\n\nI noticed you are leading operations at {{Company}}. Most ${audience} spend hours managing manual setup.\n\nWe built a solution that helps you ${outcome} effortlessly.\n\nWould you be open to a 2-minute quick look this week?\n\nBest,\nMagneto Team`,
-          landingPageHero: {
-            heading: `Transform ${concept} into High-Converting Output`,
-            subheading: `Help ${audience} ${outcome} in record time.`,
-            cta: "Get Started Free"
-          },
-          youtubeDescription: `Discover how ${concept} empowers ${audience} to ${outcome}. Watch the full breakdown and get started now!`
-        }
-      };
       res.setHeader("Content-Type", "text/plain; charset=utf-8");
       res.write(JSON.stringify(fallbackPayload));
       res.end();
@@ -616,7 +661,7 @@ Output format should be structured JSON matching this schema:
 `;
 
     const response = await generateContentWithFallback(ai, {
-      model: "gemini-3.6-flash",
+      model: "gemini-3.1-flash-lite",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -698,7 +743,7 @@ app.post("/api/generate-image", async (req, res) => {
     let base64Url = "";
 
     // 1. Try Gemini Image Generation models
-    const modelsToTry = ["gemini-3.1-flash-lite-image", "gemini-3.1-flash-image", "gemini-2.5-flash-image"];
+    const modelsToTry = ["imagen-3.0-generate-002", "gemini-2.5-flash-image"];
     for (const modelName of modelsToTry) {
       try {
         const response = await ai.models.generateContent({
@@ -791,7 +836,7 @@ Output formatted JSON conforming to:
 `;
 
     const response = await generateContentWithFallback(ai, {
-      model: "gemini-3.6-flash",
+      model: "gemini-3.1-flash-lite",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -872,7 +917,7 @@ DESIGN DETAILS & CODING CONSTRAINTS:
 `;
 
     const response = await generateContentWithFallback(ai, {
-      model: "gemini-3.6-flash",
+      model: "gemini-3.1-flash-lite",
       contents: prompt,
     });
 
