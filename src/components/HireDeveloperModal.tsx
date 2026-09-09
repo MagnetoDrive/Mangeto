@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { X, Mail, Phone, Linkedin, Clipboard, Check, ExternalLink, Rocket, Clock, ShieldCheck, Zap, CreditCard, ArrowRight, Sparkles } from "lucide-react";
+import { X, Mail, Phone, Linkedin, Clipboard, Check, ExternalLink, Rocket, Clock, ShieldCheck, Zap, CreditCard, ArrowRight, Sparkles, RefreshCw } from "lucide-react";
+import { DodoPayments } from "dodopayments-checkout";
 
 interface HireDeveloperModalProps {
   isOpen: boolean;
@@ -15,12 +16,13 @@ export default function HireDeveloperModal({ isOpen, onClose }: HireDeveloperMod
   const [clientEmail, setClientEmail] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const email = "tsepomothibeditimothymotsatse@gmail.com";
   const whatsapp = "+27 61 448 2092";
-  const paymentLink = "https://checkout.lemonsqueezy.com/buy/7-day-dev-sprint-450";
+  const paymentLink = "/api/payments/create-checkout";
 
   const copyToClipboard = (text: string, type: "email" | "phone" | "paylink") => {
     navigator.clipboard.writeText(text).then(() => {
@@ -37,13 +39,57 @@ export default function HireDeveloperModal({ isOpen, onClose }: HireDeveloperMod
     });
   };
 
-  const handleSimulatePayment = (e: React.FormEvent) => {
+  const handleDodoSprintPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    setTimeout(() => {
+    setErrorMessage(null);
+
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const redirectUrl = `${origin}/?sprint_payment=success`;
+
+      const res = await fetch("/api/payments/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planType: "DeveloperSprint",
+          customerEmail: clientEmail,
+          customerName: "Sprint Client",
+          redirectUrl
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.checkout_url) {
+        throw new Error(data.error || "Failed to initialize Dodo checkout");
+      }
+
+      // Try Dodo overlay
+      try {
+        const mode = (import.meta.env.VITE_DODO_PAYMENTS_MODE as "test" | "live") || "test";
+        DodoPayments.Initialize({
+          mode,
+          displayType: "overlay",
+          onEvent: (event) => {
+            console.log("[Dodo Sprint Event]:", event);
+            if (event.event_type === "checkout.redirect" || event.event_type === "checkout.status") {
+              setPaymentSuccess(true);
+            }
+          }
+        });
+        DodoPayments.Checkout.open({
+          checkoutUrl: data.checkout_url
+        });
+      } catch (overlayErr) {
+        console.warn("Direct redirect fallback:", overlayErr);
+        window.location.href = data.checkout_url;
+      }
+    } catch (err: any) {
+      console.error("Sprint payment error:", err);
+      setErrorMessage(err.message || "Failed to start checkout. Please try again.");
+    } finally {
       setIsProcessing(false);
-      setPaymentSuccess(true);
-    }, 1800);
+    }
   };
 
   return (
@@ -243,7 +289,12 @@ export default function HireDeveloperModal({ isOpen, onClose }: HireDeveloperMod
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSimulatePayment} className="space-y-3.5">
+              <form onSubmit={handleDodoSprintPayment} className="space-y-3.5">
+                {errorMessage && (
+                  <div className="p-2.5 bg-red-950/80 border border-red-800 text-xs text-red-200 rounded-lg">
+                    {errorMessage}
+                  </div>
+                )}
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-slate-400 uppercase font-bold">Your Business Email</label>
                   <input
@@ -271,28 +322,24 @@ export default function HireDeveloperModal({ isOpen, onClose }: HireDeveloperMod
                 <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2 text-[11px] text-slate-400">
                   <div className="flex items-center justify-between text-slate-300">
                     <span>Payment Gateway:</span>
-                    <span className="font-mono font-bold text-indigo-400">Lemon Squeezy / Paddle Hosted Checkout</span>
+                    <span className="font-mono font-bold text-indigo-400">Dodo Payments Secure Checkout</span>
                   </div>
                   <div className="flex items-center justify-between text-slate-300">
-                    <span>Checkout Link:</span>
-                    <a
-                      href={paymentLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-400 hover:underline flex items-center gap-1 font-mono text-[10px]"
-                    >
-                      Open Link Directly <ExternalLink className="w-3 h-3" />
-                    </a>
+                    <span>Protection:</span>
+                    <span className="text-emerald-400 font-medium">Merchant of Record VAT & Fraud Guarantee</span>
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/20"
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/20 disabled:opacity-60"
                 >
                   {isProcessing ? (
-                    <span>Securing 7-Day Slot...</span>
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Initializing Dodo Checkout...</span>
+                    </>
                   ) : (
                     <>
                       <LockIcon className="w-3.5 h-3.5" />
@@ -382,7 +429,7 @@ export default function HireDeveloperModal({ isOpen, onClose }: HireDeveloperMod
         {/* Call to action footer */}
         <div className="flex items-center justify-between">
           <p className="text-[11px] text-slate-500">
-            Powered by Lemon Squeezy / Paddle single payment checkout
+            Powered by Dodo Payments single payment checkout
           </p>
           <button
             onClick={onClose}

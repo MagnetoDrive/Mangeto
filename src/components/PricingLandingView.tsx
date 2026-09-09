@@ -20,34 +20,47 @@ import {
   Gift,
   Award,
   Layers,
-  Video
+  Video,
+  AlertCircle
 } from "lucide-react";
+import { DodoPayments } from "dodopayments-checkout";
 
 interface PricingLandingViewProps {
   onBackToApp?: () => void;
   onSelectFreePitch?: (concept: string) => void;
   onHireDeveloper?: () => void;
+  currentUser?: {
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+    isAnonymous?: boolean;
+  } | null;
 }
 
 export default function PricingLandingView({ 
   onBackToApp, 
   onSelectFreePitch,
-  onHireDeveloper 
+  onHireDeveloper,
+  currentUser 
 }: PricingLandingViewProps) {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [copiedPitch1, setCopiedPitch1] = useState(false);
   const [copiedPitch2, setCopiedPitch2] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
+  // Dodo checkout state
+  const [checkoutLoading, setCheckoutLoading] = useState<'Pro' | 'Agency' | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
   // Interactive 2 Free Pitches Demo state
   const [sampleConcept, setSampleConcept] = useState("AI-Powered Sales Pitch Generator");
   const [isGeneratingDemo, setIsGeneratingDemo] = useState(false);
   const [demoPitches, setDemoPitches] = useState<{ id: number; title: string; hook: string; body: string; cta: string }[] | null>(null);
 
-  // Merchant of Record (MOR) Pitches for Lemon Squeezy & Paddle
-  const morPitch1 = `Magneto is an AI-powered Video Pitch & Scriptwriting SaaS platform that converts raw product concepts into high-converting video scripts, teleprompter workflows, and marketing collateral using Gemini 1.5 Pro orchestration. Delivered as a cloud-based SaaS subscription with instant digital entitlement, automated license provisioning, strict data privacy compliance, and zero physical fulfillment risk.`;
+  // Merchant of Record (MOR) Pitches for Dodo Payments
+  const morPitch1 = `Magneto is an AI-powered Video Pitch & Scriptwriting SaaS platform that converts raw product concepts into high-converting video scripts, teleprompter workflows, and marketing collateral using Gemini AI orchestration. Delivered as a cloud-based SaaS subscription with instant digital entitlement, automated license provisioning, strict data privacy compliance, and zero physical fulfillment risk, engineered for Dodo Payments Merchant of Record standards.`;
 
-  const morPitch2 = `7-Day Custom Software Sprint is a flat-rate $450 USD digital product development service providing bespoke SaaS feature engineering, API integrations, and custom web application workflows. Features guaranteed delivery within 7 calendar days, direct senior developer collaboration, transparent milestone sign-off, and clear digital service terms compliant with Lemon Squeezy & Paddle MOR standards.`;
+  const morPitch2 = `7-Day Custom Software Sprint is a flat-rate $450 USD digital product development service providing bespoke SaaS feature engineering, API integrations, and custom web application workflows. Features guaranteed delivery within 7 calendar days, direct senior developer collaboration, transparent milestone sign-off, and clear digital service terms compliant with Dodo Payments MOR standards.`;
 
   const handleCopyMorPitch = (text: string, pitchNum: 1 | 2) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -59,6 +72,61 @@ export default function PricingLandingView({
         setTimeout(() => setCopiedPitch2(false), 2000);
       }
     });
+  };
+
+  const handleDodoCheckout = async (planType: 'Pro' | 'Agency') => {
+    setCheckoutLoading(planType);
+    setCheckoutError(null);
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const redirectUrl = `${origin}/pricing?payment=success&plan=${planType}`;
+
+      const res = await fetch("/api/payments/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planType,
+          billingCycle,
+          userId: currentUser?.uid,
+          customerEmail: currentUser?.email,
+          customerName: currentUser?.displayName,
+          redirectUrl
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.checkout_url) {
+        throw new Error(data.error || "Could not generate checkout session.");
+      }
+
+      // Initialize DodoPayments checkout overlay
+      try {
+        const mode = (import.meta.env.VITE_DODO_PAYMENTS_MODE as "test" | "live") || (data.mode as "test" | "live") || "test";
+        DodoPayments.Initialize({
+          mode,
+          displayType: "overlay",
+          onEvent: (event) => {
+            console.log("[Dodo Payments Overlay Event]:", event);
+            if (event.event_type === "checkout.redirect" || event.event_type === "checkout.status") {
+              if (typeof window !== "undefined" && data.checkout_url) {
+                window.location.href = data.checkout_url;
+              }
+            }
+          }
+        });
+        DodoPayments.Checkout.open({
+          checkoutUrl: data.checkout_url
+        });
+      } catch (overlayErr) {
+        console.warn("Dodo checkout overlay fallback to direct redirect:", overlayErr);
+        window.location.href = data.checkout_url;
+      }
+    } catch (err: any) {
+      console.error("Dodo Checkout error:", err);
+      setCheckoutError(err.message || "Unable to start checkout. Please try again.");
+    } finally {
+      setCheckoutLoading(null);
+    }
   };
 
   const handleGenerate2FreePitches = (e: React.FormEvent) => {
@@ -88,16 +156,16 @@ export default function PricingLandingView({
 
   const faqs = [
     {
-      q: "Why do you use Lemon Squeezy & Paddle as Merchants of Record (MOR)?",
-      a: "Lemon Squeezy and Paddle act as our Merchant of Record, handling global EU VAT, sales tax compliance, multi-currency conversion, and PCI-DSS compliant secure credit card/PayPal checkouts. You get instant invoices and seamless management."
+      q: "Why do you use Dodo Payments as Merchant of Record (MOR)?",
+      a: "Dodo Payments acts as our Merchant of Record, handling global EU VAT, sales tax compliance, multi-currency conversion, local payment methods, and PCI-DSS compliant secure credit card and banking checkouts. You get instant invoices and seamless management."
     },
     {
       q: "How do the 2 Free Pitches work?",
       a: "Every new account automatically receives 2 Free AI Video Pitches with full teleprompter and hook engine access—no credit card or upfront commitment required. Upgrade to Pro whenever you need unlimited pitches."
     },
     {
-      q: "Can I use the pre-written MOR Pitches for my own Lemon Squeezy / Paddle store?",
-      a: "Yes! If you are applying to Lemon Squeezy or Paddle as a vendor to sell software or digital services, copy our 2 pre-formatted MOR pitch templates above. They are engineered to satisfy MOR risk & compliance requirements."
+      q: "Can I use the pre-written MOR Pitches for my own Dodo Payments store?",
+      a: "Yes! If you are applying to Dodo Payments or other MoRs as a vendor to sell software or digital services, copy our 2 pre-formatted MOR pitch templates above. They are engineered to satisfy MOR risk & compliance requirements."
     },
     {
       q: "What is included in the $450 7-Day Developer Sprint?",
@@ -105,7 +173,7 @@ export default function PricingLandingView({
     },
     {
       q: "Can I cancel my subscription anytime?",
-      a: "Absolutely. You can manage or cancel your subscription at any time with 1-click through your Lemon Squeezy or Paddle customer portal."
+      a: "Absolutely. You can manage or cancel your subscription at any time with 1-click through your Dodo Payments customer portal."
     }
   ];
 
@@ -153,7 +221,7 @@ export default function PricingLandingView({
 
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-xs font-mono uppercase font-bold tracking-wider animate-pulse">
           <Gift className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Includes 2 Free Pitches • Powered by Lemon Squeezy & Paddle MOR</span>
+          <span>Includes 2 Free Pitches • Powered by Dodo Payments MOR</span>
         </div>
 
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-100 leading-tight max-w-4xl mx-auto">
@@ -161,18 +229,18 @@ export default function PricingLandingView({
         </h1>
 
         <p className="text-sm md:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          Convert product concepts into structured pitch scripts, teleprompter workflows, and marketing campaigns in seconds. Backed by industry-standard Merchant of Record (MOR) compliance.
+          Convert product concepts into structured pitch scripts, teleprompter workflows, and marketing campaigns in seconds. Backed by industry-standard Dodo Payments Merchant of Record (MOR) compliance.
         </p>
 
         {/* MOR Compliance Trust Badges */}
         <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 font-mono">
           <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Lemon Squeezy Merchant of Record</span>
+            <span>Dodo Payments Merchant of Record</span>
           </div>
           <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg">
             <CreditCard className="w-4 h-4 text-sky-400" />
-            <span>Paddle MOR Compliant</span>
+            <span>1-Click Checkout Overlay</span>
           </div>
           <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg">
             <Lock className="w-4 h-4 text-amber-400" />
@@ -323,6 +391,14 @@ export default function PricingLandingView({
           </div>
         </div>
 
+        {checkoutError && (
+          <div className="max-w-md mx-auto mb-6 p-3 bg-red-950/80 border border-red-800/80 rounded-xl text-xs text-red-200 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <span className="flex-1">{checkoutError}</span>
+            <button onClick={() => setCheckoutError(null)} className="text-red-400 hover:text-white font-bold">✕</button>
+          </div>
+        )}
+
         {/* Pricing Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           
@@ -418,7 +494,7 @@ export default function PricingLandingView({
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Lemon Squeezy & Paddle Checkout Sync</span>
+                  <span>Dodo Payments Checkout Overlay Sync</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />
@@ -427,15 +503,18 @@ export default function PricingLandingView({
               </ul>
             </div>
 
-            <a
-              href="https://checkout.lemonsqueezy.com/buy/magneto-pro-subscription"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-8 w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-1.5 cursor-pointer"
+            <button
+              onClick={() => handleDodoCheckout('Pro')}
+              disabled={checkoutLoading === 'Pro'}
+              className="mt-8 w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
             >
-              <CreditCard className="w-4 h-4" />
-              Subscribe via Lemon Squeezy / Paddle
-            </a>
+              {checkoutLoading === 'Pro' ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <CreditCard className="w-4 h-4" />
+              )}
+              <span>{checkoutLoading === 'Pro' ? "Preparing Checkout..." : "Subscribe with Dodo Payments"}</span>
+            </button>
           </div>
 
           {/* Card 3: Agency & Scale */}
@@ -482,15 +561,18 @@ export default function PricingLandingView({
               </ul>
             </div>
 
-            <a
-              href="https://checkout.lemonsqueezy.com/buy/magneto-agency-subscription"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-8 w-full py-3 bg-purple-900/50 hover:bg-purple-900/80 text-purple-200 text-xs font-bold rounded-xl border border-purple-700/50 transition flex items-center justify-center gap-1.5 cursor-pointer"
+            <button
+              onClick={() => handleDodoCheckout('Agency')}
+              disabled={checkoutLoading === 'Agency'}
+              className="mt-8 w-full py-3 bg-purple-900/50 hover:bg-purple-900/80 text-purple-200 text-xs font-bold rounded-xl border border-purple-700/50 transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
             >
-              <Rocket className="w-4 h-4" />
-              Subscribe Agency Plan
-            </a>
+              {checkoutLoading === 'Agency' ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Rocket className="w-4 h-4" />
+              )}
+              <span>{checkoutLoading === 'Agency' ? "Preparing Checkout..." : "Subscribe Agency with Dodo Payments"}</span>
+            </button>
           </div>
 
         </div>
@@ -518,15 +600,15 @@ export default function PricingLandingView({
         </div>
       </section>
 
-      {/* SECTION 3: 2 Free Copyable Merchant of Record (MOR) Pitches for Lemon Squeezy & Paddle */}
+      {/* SECTION 3: 2 Free Copyable Merchant of Record (MOR) Pitches for Dodo Payments */}
       <section className="max-w-5xl mx-auto px-4 mb-20 space-y-6">
         <div className="text-center space-y-2">
           <span className="text-xs font-mono uppercase font-bold text-indigo-400">Merchant of Record Compliance Kit</span>
           <h2 className="text-2xl font-extrabold text-slate-100">
-            2 Free Copyable Pitches for Lemon Squeezy & Paddle MORs
+            2 Free Copyable Pitches for Dodo Payments & MoR Compliance
           </h2>
           <p className="text-xs text-slate-400 max-w-xl mx-auto">
-            Submitting your product to Lemon Squeezy or Paddle for Merchant of Record approval? Copy these 2 pre-written, compliance-audited product pitches to pass MOR vendor review instantly.
+            Submitting your SaaS product or service to Dodo Payments for Merchant of Record approval? Copy these 2 pre-written, compliance-audited product pitches to pass MOR vendor review smoothly.
           </p>
         </div>
 
@@ -538,7 +620,7 @@ export default function PricingLandingView({
                 <span className="text-xs font-mono font-bold text-indigo-400 uppercase">MOR Pitch Template #1</span>
                 <span className="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded">SaaS Subscription Pitch</span>
               </div>
-              <h3 className="text-sm font-bold text-slate-200">Lemon Squeezy / Paddle SaaS Compliance Pitch</h3>
+              <h3 className="text-sm font-bold text-slate-200">Dodo Payments SaaS Compliance Pitch</h3>
               <p className="text-xs text-slate-300 leading-relaxed bg-slate-950 p-3.5 rounded-xl border border-slate-850 font-mono text-[11px]">
                 {morPitch1}
               </p>
@@ -560,7 +642,7 @@ export default function PricingLandingView({
                 <span className="text-xs font-mono font-bold text-purple-400 uppercase">MOR Pitch Template #2</span>
                 <span className="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded">Digital Service / Sprint Pitch</span>
               </div>
-              <h3 className="text-sm font-bold text-slate-200">Lemon Squeezy / Paddle Custom Sprint Pitch</h3>
+              <h3 className="text-sm font-bold text-slate-200">Dodo Payments Custom Sprint Pitch</h3>
               <p className="text-xs text-slate-300 leading-relaxed bg-slate-950 p-3.5 rounded-xl border border-slate-850 font-mono text-[11px]">
                 {morPitch2}
               </p>

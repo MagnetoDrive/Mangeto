@@ -71,13 +71,13 @@ export default function TermsPage({ onBack }: TermsProps) {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
               <span className="text-xs font-mono text-indigo-400">02.</span>
-              Subscriptions & Billing (Lemon Squeezy)
+              Subscriptions & Billing (Dodo Payments)
             </h2>
             <p>
-              All purchases, recurring fees, taxes, renewals, payment processors, and receipt emissions are exclusively handled by our official Merchant of Record (MoR) – <strong>Lemon Squeezy</strong>.
+              All purchases, recurring fees, taxes, renewals, payment processors, and receipt emissions are exclusively handled by our official Merchant of Record (MoR) – <strong>Dodo Payments</strong>.
             </p>
             <p>
-              To cancel your ongoing subscriptions or update your card details, use the dedicated billing links provided in the footer or log in directly to your Lemon Squeezy customer portal.
+              To cancel your ongoing subscriptions or update your card details, use the dedicated billing links provided in the footer or manage your plan directly through your Dodo Payments customer portal.
             </p>
           </section>
 
@@ -88,7 +88,7 @@ export default function TermsPage({ onBack }: TermsProps) {
               Refund Policy
             </h2>
             <p>
-              We want you to be fully satisfied with our marketing suite. We offer a <strong>7-day money-back refund policy</strong>. Refund claims must be submitted and processed through the Lemon Squeezy transaction dashboard or by reaching out to our support channel.
+              We want you to be fully satisfied with our marketing suite. We offer a <strong>7-day money-back refund policy</strong>. Refund claims must be submitted and processed through the Dodo Payments customer portal or by reaching out to our support channel.
             </p>
           </section>
 

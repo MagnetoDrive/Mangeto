@@ -5,7 +5,7 @@ import cors from "cors";
 import crypto from "crypto";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
-import { handleLemonSqueezyWebhook } from "./webhooks";
+import { handleLemonSqueezyWebhook, handleDodoPaymentsWebhook } from "./webhooks";
 
 dotenv.config();
 
@@ -610,7 +610,9 @@ Output formatted JSON conforming to:
   }
 });
 
-// 6. LEMON SQUEEZY WEBHOOK ENDPOINT
+// 6. DODO PAYMENTS & WEBHOOK ENDPOINTS
+app.post("/api/webhooks/dodo", handleDodoPaymentsWebhook);
+app.post("/api/webhook/dodo", handleDodoPaymentsWebhook);
 app.post("/api/webhook/lemonsqueezy", handleLemonSqueezyWebhook);
 
 export const api = onRequest(app);

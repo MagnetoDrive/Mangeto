@@ -1,8 +1,11 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeFirestore, doc, setDoc, getDocs, collection, query, where, getDoc } from "firebase/firestore";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -10,7 +13,11 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req: any, _res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 // Lazy-loaded Gemini AI client
 let _ai: GoogleGenAI | null = null;
@@ -1088,6 +1095,341 @@ app.post("/api/deploy-vercel", async (req, res) => {
     console.error("Vercel deploy error:", error);
     res.status(500).json({ error: error.message || "Failed to deploy to Vercel." });
   }
+});
+
+// ==========================================
+// DODO PAYMENTS INTEGRATION
+// ==========================================
+
+// Lazy-loaded Firestore backend instance
+const backendFirebaseConfig = {
+  apiKey: process.env.VITE_FIREBASE_API_KEY || "AIzaSyB-BwS0rv53mTkKmcjhSfkCTl0COeTf-ck",
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || "magneto-1750e.firebaseapp.com",
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID || "magneto-1750e",
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || "magneto-1750e.firebasestorage.app",
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "100091620250",
+  appId: process.env.VITE_FIREBASE_APP_ID || "1:100091620250:web:2280b209b0f695db29a823"
+};
+const backendDatabaseId = process.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || "G-6DPJB2EXC9";
+
+let _backendDb: any = null;
+function getBackendFirestore() {
+  if (!_backendDb) {
+    try {
+      const fbApp = getApps().length === 0 ? initializeApp(backendFirebaseConfig) : getApp();
+      _backendDb = initializeFirestore(fbApp, {}, backendDatabaseId);
+    } catch (err) {
+      console.warn("Backend Firestore initialization note:", err);
+    }
+  }
+  return _backendDb;
+}
+
+/**
+ * Verifies Dodo Payments webhook signatures following the Standard Webhooks specification.
+ */
+function verifyDodoWebhookSignature(
+  rawBody: Buffer | string | undefined,
+  headers: Record<string, any>,
+  secret: string
+): boolean {
+  if (!secret) {
+    console.log("[Dodo Webhook] No DODO_PAYMENTS_WEBHOOK_SECRET configured. Bypassing signature verification.");
+    return true;
+  }
+
+  const webhookId = (headers["webhook-id"] || headers["Webhook-Id"]) as string;
+  const webhookTimestamp = (headers["webhook-timestamp"] || headers["Webhook-Timestamp"]) as string;
+  const webhookSignature = (headers["webhook-signature"] || headers["Webhook-Signature"]) as string;
+
+  if (!webhookId || !webhookTimestamp || !webhookSignature) {
+    console.error("[Dodo Webhook] Missing required headers: webhook-id, webhook-timestamp, or webhook-signature");
+    return false;
+  }
+
+  const bodyStr = rawBody 
+    ? (typeof rawBody === "string" ? rawBody : rawBody.toString("utf8"))
+    : "";
+  const signedContent = `${webhookId}.${webhookTimestamp}.${bodyStr}`;
+
+  let secretKey: Buffer;
+  if (secret.startsWith("whsec_")) {
+    const b64Secret = secret.slice("whsec_".length);
+    secretKey = Buffer.from(b64Secret, "base64");
+  } else {
+    secretKey = Buffer.from(secret, "utf8");
+  }
+
+  const computedSig = crypto
+    .createHmac("sha256", secretKey)
+    .update(signedContent)
+    .digest("base64");
+
+  const sigList = webhookSignature.split(" ");
+  for (const item of sigList) {
+    const parts = item.split(",");
+    const sigVal = parts.length > 1 ? parts[1] : parts[0];
+    try {
+      if (crypto.timingSafeEqual(Buffer.from(sigVal), Buffer.from(computedSig))) {
+        return true;
+      }
+    } catch {
+      // Buffer length mismatch or bad format
+    }
+  }
+
+  console.error("[Dodo Webhook] Webhook signature did not match computed HMAC.");
+  return false;
+}
+
+/**
+ * 9. ENDPOINT: Create Dodo Payments Checkout Session
+ */
+app.post("/api/payments/create-checkout", async (req, res) => {
+  try {
+    const { planType, billingCycle, userId, customerEmail, customerName, redirectUrl, productId: customProductId } = req.body;
+
+    const cycle = billingCycle === "yearly" ? "yearly" : "monthly";
+    let productId = customProductId;
+
+    if (!productId) {
+      if (planType === "Agency") {
+        productId = cycle === "yearly"
+          ? (process.env.DODO_PAYMENTS_AGENCY_YEARLY_PRODUCT_ID || "pdt_agency_yearly")
+          : (process.env.DODO_PAYMENTS_AGENCY_MONTHLY_PRODUCT_ID || "pdt_agency_monthly");
+      } else if (planType === "dev_sprint" || planType === "DeveloperSprint") {
+        productId = process.env.DODO_PAYMENTS_DEV_SPRINT_PRODUCT_ID || "pdt_dev_sprint";
+      } else {
+        // Default Pro plan
+        productId = cycle === "yearly"
+          ? (process.env.DODO_PAYMENTS_PRO_YEARLY_PRODUCT_ID || "pdt_pro_yearly")
+          : (process.env.DODO_PAYMENTS_PRO_MONTHLY_PRODUCT_ID || "pdt_pro_monthly");
+      }
+    }
+
+    // Determine return URL
+    const defaultHost = req.get("host") || "localhost:3000";
+    const protocol = req.protocol || "http";
+    const fallbackReturnUrl = `${protocol}://${defaultHost}/pricing?payment=success`;
+    const finalReturnUrl = redirectUrl || process.env.DODO_PAYMENTS_RETURN_URL || fallbackReturnUrl;
+
+    const apiKey = process.env.DODO_PAYMENTS_API_KEY;
+
+    if (apiKey) {
+      const isLive = process.env.DODO_PAYMENTS_ENVIRONMENT === "live";
+      const baseUrl = isLive ? "https://live.dodopayments.com" : "https://test.dodopayments.com";
+
+      const checkoutPayload = {
+        product_cart: [
+          {
+            product_id: productId,
+            quantity: 1
+          }
+        ],
+        customer: {
+          email: customerEmail || "creator@example.com",
+          name: customerName || "Magneto Creator"
+        },
+        return_url: finalReturnUrl,
+        metadata: {
+          userId: userId || "",
+          plan: planType || "Pro",
+          billingCycle: cycle
+        }
+      };
+
+      console.log(`[Dodo Payments] Creating checkout session at ${baseUrl}/checkouts for product: ${productId}`);
+
+      const dodoRes = await fetch(`${baseUrl}/checkouts`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(checkoutPayload)
+      });
+
+      if (!dodoRes.ok) {
+        const errorText = await dodoRes.text();
+        console.warn(`[Dodo Payments API Warning] Status: ${dodoRes.status} ${dodoRes.statusText}`, errorText);
+        throw new Error(`Dodo Payments checkout creation failed: ${errorText || dodoRes.statusText}`);
+      }
+
+      const dodoData: any = await dodoRes.json();
+      const checkoutUrl = dodoData.checkout_url || dodoData.payment_link || dodoData.url;
+      const sessionId = dodoData.session_id || dodoData.id;
+
+      return res.json({
+        success: true,
+        checkout_url: checkoutUrl,
+        session_id: sessionId,
+        mode: isLive ? "live" : "test"
+      });
+    }
+
+    // Graceful fallback when API key is not yet configured in environment
+    console.log("[Dodo Payments] No DODO_PAYMENTS_API_KEY configured. Returning simulated test checkout link.");
+    const testSessionId = `sim_dodo_${Date.now()}`;
+    const cleanUrl = finalReturnUrl.includes("?")
+      ? `${finalReturnUrl}&session_id=${testSessionId}&provider=dodo`
+      : `${finalReturnUrl}?session_id=${testSessionId}&provider=dodo`;
+
+    return res.json({
+      success: true,
+      checkout_url: cleanUrl,
+      session_id: testSessionId,
+      isSimulated: true,
+      message: "DODO_PAYMENTS_API_KEY is not configured yet. Using simulated test redirect. Set DODO_PAYMENTS_API_KEY in Vercel to activate live/test Dodo gateway."
+    });
+  } catch (err: any) {
+    console.error("[Dodo Payments create-checkout error]:", err);
+    res.status(500).json({ error: err.message || "Failed to create Dodo Payments checkout session." });
+  }
+});
+
+/**
+ * Webhook handler processing Dodo Payments events and updating user entitlements
+ */
+async function handleDodoWebhook(req: express.Request, res: express.Response) {
+  console.log("[Dodo Payments Webhook] Received webhook POST event.");
+  try {
+    const rawBody = (req as any).rawBody || Buffer.from(JSON.stringify(req.body));
+    const secret = process.env.DODO_PAYMENTS_WEBHOOK_SECRET || "";
+
+    const isValid = verifyDodoWebhookSignature(rawBody, req.headers, secret);
+    if (!isValid) {
+      return res.status(401).json({ error: "Invalid webhook signature." });
+    }
+
+    const payload = req.body || {};
+    const eventType = payload.type || payload.event_type || payload.event || "unknown";
+    const data = payload.data || payload;
+
+    console.log(`[Dodo Payments Webhook] Processing event: ${eventType}`);
+
+    const metadata = data.metadata || payload.metadata || {};
+    const customer = data.customer || {};
+    const customerEmail = customer.email || data.email;
+    const userId = metadata.userId || metadata.user_id;
+    const requestedPlan = metadata.plan || (data.product_id?.includes("agency") ? "Agency" : "Pro");
+    const subId = data.subscription_id || data.payment_id || data.id || `sub_dodo_${Date.now()}`;
+    const renewalDate = data.next_billing_date ? data.next_billing_date.split("T")[0] : "";
+
+    const firestore = getBackendFirestore();
+
+    if (
+      eventType === "payment.succeeded" ||
+      eventType === "subscription.active" ||
+      eventType === "subscription.created" ||
+      eventType === "subscription.renewed" ||
+      eventType === "subscription.updated"
+    ) {
+      const planStatus = requestedPlan === "Agency" ? "Agency" : "Pro";
+      console.log(`[Dodo Payments] Granting entitlement to plan: ${planStatus} (ID: ${subId})`);
+
+      if (firestore) {
+        // Record subscription ledger
+        try {
+          const subRef = doc(firestore, "subscriptions", String(subId));
+          await setDoc(subRef, {
+            id: String(subId),
+            userId: userId || "",
+            customerEmail: customerEmail || "",
+            plan: `${planStatus} Plan`,
+            status: "active",
+            renewalDate: renewalDate,
+            gateway: "dodo_payments",
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (subErr) {
+          console.warn("[Dodo Payments Webhook] Subscription Firestore write note:", subErr);
+        }
+
+        // Update user entitlement
+        if (userId) {
+          try {
+            const userRef = doc(firestore, "users", userId);
+            await setDoc(userRef, {
+              planStatus: planStatus,
+              lastActive: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+            console.log(`[Dodo Payments] User ${userId} planStatus updated to ${planStatus}`);
+          } catch (uErr) {
+            console.warn("[Dodo Payments Webhook] User update note:", uErr);
+          }
+        } else if (customerEmail) {
+          try {
+            const usersCol = collection(firestore, "users");
+            const q = query(usersCol, where("email", "==", customerEmail));
+            const querySnap = await getDocs(q);
+            if (!querySnap.empty) {
+              const matchedUserDoc = querySnap.docs[0];
+              await setDoc(matchedUserDoc.ref, {
+                planStatus: planStatus,
+                lastActive: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              }, { merge: true });
+              console.log(`[Dodo Payments] Found user by email ${customerEmail}. Plan updated to: ${planStatus}`);
+            }
+          } catch (queryErr) {
+            console.warn("[Dodo Payments Webhook] Email query note:", queryErr);
+          }
+        }
+      }
+
+      return res.status(200).json({ success: true, event: eventType, planStatus });
+    }
+
+    if (
+      eventType === "subscription.cancelled" ||
+      eventType === "subscription.expired" ||
+      eventType === "subscription.failed" ||
+      eventType === "subscription.on_hold"
+    ) {
+      console.log(`[Dodo Payments] Downgrading subscription ${subId} to Free status due to ${eventType}`);
+      if (firestore) {
+        try {
+          const subRef = doc(firestore, "subscriptions", String(subId));
+          await setDoc(subRef, {
+            status: "cancelled",
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (subErr) {
+          console.warn("[Dodo Payments Webhook] Subscription cancellation write note:", subErr);
+        }
+
+        if (userId) {
+          try {
+            const userRef = doc(firestore, "users", userId);
+            await setDoc(userRef, {
+              planStatus: "Free",
+              lastActive: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+            console.log(`[Dodo Payments] User ${userId} downgraded to Free status`);
+          } catch (uErr) {
+            console.warn("[Dodo Payments Webhook] User downgrade note:", uErr);
+          }
+        }
+      }
+      return res.status(200).json({ success: true, event: eventType, planStatus: "Free" });
+    }
+
+    return res.status(200).json({ success: true, event: eventType, message: "Event received" });
+  } catch (err: any) {
+    console.error("[Dodo Payments Webhook Error]:", err);
+    return res.status(500).json({ error: err.message || "Webhook processing failed" });
+  }
+}
+
+// 10. ENDPOINT: Dodo Payments Webhook Endpoints
+app.post("/api/webhooks/dodo", handleDodoWebhook);
+app.post("/api/webhook/dodo", handleDodoWebhook);
+
+// Backwards-compatible legacy route
+app.post("/api/webhook/lemonsqueezy", (req, res) => {
+  res.json({ message: "Lemon Squeezy is deprecated. Dodo Payments webhook is active at /api/webhooks/dodo" });
 });
 
 // Configure Vite middleware in development or serve static files in production

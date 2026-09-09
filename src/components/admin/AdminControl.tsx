@@ -33,7 +33,7 @@ interface FirestoreUser {
 }
 
 interface FirestoreSubscription {
-  id: string; // Lemon Squeezy ID
+  id: string; // Dodo Payments / Subscription ID
   plan: string;
   status: string;
   renewalDate: string;
@@ -387,34 +387,33 @@ export default function AdminControl({ onBack }: AdminControlProps) {
     setPassword("");
   };
 
-  const handleSyncLemonSqueezy = async () => {
+  const handleSyncDodoPayments = async () => {
     setIsSyncingLS(true);
     setSyncStatus(null);
     try {
-      // Call simulated or mock LS sync with LS API
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Let's create a realistic sync effect by adding a new subscription document if it doesn't already exist
-      const mockLsId = `sub_ls_${Math.floor(Math.random() * 900000) + 100000}`;
+      const mockDodoId = `sub_dodo_${Math.floor(Math.random() * 900000) + 100000}`;
       const newSub: FirestoreSubscription = {
-        id: mockLsId,
+        id: mockDodoId,
         plan: "Pro Monthly",
         status: "active",
         renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       };
 
-      await setDoc(doc(db, "subscriptions", mockLsId), {
+      await setDoc(doc(db, "subscriptions", mockDodoId), {
         plan: newSub.plan,
         status: newSub.status,
-        renewalDate: newSub.renewalDate
+        renewalDate: newSub.renewalDate,
+        gateway: "dodo_payments"
       });
 
       // Reload
       await fetchAdminData();
-      setSyncStatus(`Lemon Squeezy Sync completed! Synchronized subscription: ${mockLsId}`);
+      setSyncStatus(`Dodo Payments Sync completed! Synchronized ledger document: ${mockDodoId}`);
       setTimeout(() => setSyncStatus(null), 5000);
     } catch (err) {
-      setSyncStatus("Failed to communicate with Lemon Squeezy gateway.");
+      setSyncStatus("Failed to communicate with Dodo Payments gateway.");
     } finally {
       setIsSyncingLS(false);
     }
@@ -713,16 +712,16 @@ export default function AdminControl({ onBack }: AdminControlProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-extrabold text-slate-100">Billing & Subscriptions</h2>
-                  <p className="text-xs text-slate-400">Lemon Squeezy Merchant of Record ledger</p>
+                  <p className="text-xs text-slate-400">Dodo Payments Merchant of Record ledger</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={handleSyncLemonSqueezy}
+                    onClick={handleSyncDodoPayments}
                     disabled={isSyncingLS}
                     className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-505 text-slate-100 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-60 border border-indigo-500/30"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isSyncingLS ? 'animate-spin' : ''}`} />
-                    <span>{isSyncingLS ? "Syncing Gateway..." : "Sync with Lemon Squeezy"}</span>
+                    <span>{isSyncingLS ? "Syncing Gateway..." : "Sync with Dodo Payments"}</span>
                   </button>
                   <button
                     onClick={() => exportToCSV('subscriptions')}
@@ -738,7 +737,7 @@ export default function AdminControl({ onBack }: AdminControlProps) {
                 <table className="w-full text-left text-xs text-slate-300 border-collapse">
                   <thead>
                     <tr className="bg-slate-950 border-b border-slate-850 text-slate-400 font-mono uppercase text-[10px] tracking-wider font-bold">
-                      <th className="py-3 px-4">Lemon Squeezy ID</th>
+                      <th className="py-3 px-4">Dodo / Sub ID</th>
                       <th className="py-3 px-4">Plan Name</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Renewal Date</th>

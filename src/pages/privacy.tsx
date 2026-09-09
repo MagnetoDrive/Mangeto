@@ -76,10 +76,10 @@ export default function PrivacyPage({ onBack }: PrivacyProps) {
               Merchant of Record (MoR)
             </h2>
             <p>
-              All online transactions, payments, global VAT, sales tax management, and subscription cancellations on Magneto are handled and processed securely by <strong>Lemon Squeezy</strong> as our exclusive Merchant of Record.
+              All online transactions, payments, global VAT, sales tax management, and subscription cancellations on Magneto are handled and processed securely by <strong>Dodo Payments</strong> as our exclusive Merchant of Record.
             </p>
             <p>
-              Lemon Squeezy is the legal seller of Magneto services and processes billing parameters under its own privacy frameworks. No full payment card data is processed, seen, or stored on our servers.
+              Dodo Payments is the legal seller of Magneto services and processes billing parameters under its own privacy frameworks. No full payment card data is processed, seen, or stored on our servers.
             </p>
           </section>
 
