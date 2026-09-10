@@ -41,9 +41,9 @@ export default function TermsPage({ onBack }: TermsProps) {
         <div className="bg-indigo-600/10 border border-indigo-500/20 p-5 rounded-2xl flex items-start gap-3.5">
           <Info className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
           <div className="space-y-1.5 text-xs text-indigo-300">
-            <span className="font-extrabold block uppercase tracking-wider text-[10px] font-mono">Service Overview</span>
+            <span className="font-extrabold block uppercase tracking-wider text-[10px] font-mono">Software Subscription Service</span>
             <p className="leading-relaxed">
-              This agreement establishes terms under which Tsepo Motsatse provides Magneto to you. By accessing or interacting with our AI campaign planners, storyboards, and hook engines, you confirm your acceptance of these operational boundaries.
+              Magneto is a 100% self-service, cloud-based software subscription service (SaaS) providing automated pitch deck analysis, video script synthesis, and browser teleprompter execution. By accessing our software platform, you agree to the terms herein. All features are delivered via instant digital entitlement upon payment.
             </p>
           </div>
         </div>
@@ -54,16 +54,16 @@ export default function TermsPage({ onBack }: TermsProps) {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
               <span className="text-xs font-mono text-indigo-400">01.</span>
-              AI Content & "As-Is" Service
+              Automated AI Software Platform
             </h2>
             <p>
-              Magneto is a creative workflow co-pilot that leverages generative artificial intelligence models (such as Google Gemini Pro/Flash) to help formulate video hooks, scripts, storyboards, and distribution items.
+              Magneto is an automated software application that leverages artificial intelligence models to formulate video hooks, scripts, storyboards, and distribution items from pitch deck inputs.
             </p>
             <p className="font-semibold text-slate-200">
-              The application, its engines, and mock models are provided completely "As-Is" and "As-Available."
+              The software application and algorithms are provided on an "As-Is" and "As-Available" subscription basis.
             </p>
             <p>
-              Generative outputs can sometimes contain inaccuracies, stylistic oddities, or errors. You bear absolute responsibility for analyzing, reviewing, validating, and editing all outputs before publishing them or deploying them in real commercial formats.
+              AI generation models execute algorithmically based on user prompts. Users maintain full control over reviewing, selecting, and editing generated scripts and storyboard scenes prior to export.
             </p>
           </section>
 
@@ -71,13 +71,16 @@ export default function TermsPage({ onBack }: TermsProps) {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
               <span className="text-xs font-mono text-indigo-400">02.</span>
-              Subscriptions & Billing (Dodo Payments)
+              Software Subscriptions & Instant Digital Entitlement
             </h2>
             <p>
-              All purchases, recurring fees, taxes, renewals, payment processors, and receipt emissions are exclusively handled by our official Merchant of Record (MoR) – <strong>Dodo Payments</strong>.
+              Magneto subscriptions provide monthly software generation credits and interactive teleprompter access. Subscriptions renew automatically on a recurring monthly or annual basis until canceled.
             </p>
             <p>
-              To cancel your ongoing subscriptions or update your card details, use the dedicated billing links provided in the footer or manage your plan directly through your Dodo Payments customer portal.
+              All purchases, billing cycles, sales tax, EU VAT, and payment processing are handled securely by our Merchant of Record – <strong>Dodo Payments</strong>.
+            </p>
+            <p>
+              You can cancel your recurring software subscription at any time with 1 click directly in your customer dashboard or via the Dodo Payments customer portal. Cancellation takes effect at the conclusion of the active paid billing period.
             </p>
           </section>
 
@@ -85,10 +88,13 @@ export default function TermsPage({ onBack }: TermsProps) {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
               <span className="text-xs font-mono text-indigo-400">03.</span>
-              Refund Policy
+              Refund & Cancellation Policy
             </h2>
             <p>
-              We want you to be fully satisfied with our marketing suite. We offer a <strong>7-day money-back refund policy</strong>. Refund claims must be submitted and processed through the Dodo Payments customer portal or by reaching out to our support channel.
+              We offer a <strong>14-day refund window</strong> for all software subscription purchases. If you have not utilized your monthly AI generation credits, you are eligible for a 100% full refund within 14 calendar days of payment.
+            </p>
+            <p>
+              To request a refund or cancel your subscription, manage your plan directly in your customer portal or contact our support team at <a href="mailto:tsepomotsatse@gmail.com" className="text-indigo-400 underline font-semibold">tsepomotsatse@gmail.com</a>.
             </p>
           </section>
 
@@ -134,8 +140,8 @@ export default function TermsPage({ onBack }: TermsProps) {
         {/* Legal Disclaimer Footer */}
         <div className="pt-8 border-t border-slate-850 flex items-center gap-3">
           <Scale className="w-5 h-5 text-slate-500 shrink-0" />
-          <p className="text-[11px] text-slate-550 leading-normal">
-            For operational inquiries or formal issues regarding these terms, send details to <a href="mailto:tsepomothibeditimothymotsatse@gmail.com" className="hover:underline text-indigo-400 font-semibold">tsepomothibeditimothymotsatse@gmail.com</a>.
+          <p className="text-[11px] text-slate-400 leading-normal">
+            For operational inquiries or formal issues regarding these software subscription terms, contact <a href="mailto:tsepomotsatse@gmail.com" className="hover:underline text-indigo-400 font-semibold">tsepomotsatse@gmail.com</a>.
           </p>
         </div>
       </div>

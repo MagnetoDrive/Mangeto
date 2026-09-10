@@ -64,7 +64,7 @@ export default function PrivacyPage({ onBack }: PrivacyProps) {
               <p className="text-slate-450">Johannesburg, South Africa</p>
               <p className="text-slate-400 flex items-center gap-1.5 mt-2">
                 <Mail className="w-3.5 h-3.5 text-indigo-400" />
-                <a href="mailto:tsepomothibeditimothymotsatse@gmail.com" className="hover:underline hover:text-indigo-400">tsepomothibeditimothymotsatse@gmail.com</a>
+                <a href="mailto:tsepomotsatse@gmail.com" className="hover:underline hover:text-indigo-400">tsepomotsatse@gmail.com</a>
               </p>
             </div>
           </section>
@@ -134,7 +134,7 @@ export default function PrivacyPage({ onBack }: PrivacyProps) {
               <li><strong>Right to Erasure ("Right to be Forgotten"):</strong> Request full deletion of your profile, feedback reports, and pitch data at any time.</li>
             </ul>
             <p>
-              To exercise these rights, submit your written request directly to <a href="mailto:tsepomothibeditimothymotsatse@gmail.com" className="text-indigo-400 underline font-semibold">tsepomothibeditimothymotsatse@gmail.com</a>.
+              To exercise these rights, submit your written request directly to <a href="mailto:tsepomotsatse@gmail.com" className="text-indigo-400 underline font-semibold">tsepomotsatse@gmail.com</a>.
             </p>
           </section>
         </div>

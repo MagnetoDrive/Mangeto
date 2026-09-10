@@ -20,6 +20,8 @@ import { setDoc, doc } from "firebase/firestore";
 const AdminControl = lazy(() => import("./components/admin/AdminControl"));
 import PrivacyPage from "./pages/privacy";
 import TermsPage from "./pages/terms";
+import RefundPage from "./pages/refund";
+import ComplianceFooter from "./components/ComplianceFooter";
 import HireDeveloperModal from "./components/HireDeveloperModal";
 import FeedbackWidget from "./components/FeedbackWidget";
 import PricingLandingView from "./components/PricingLandingView";
@@ -43,13 +45,14 @@ export default function App() {
   const [userId, setUserId] = useState<string | null>(null);
 
   // Active page routing and modal states
-  const [activePage, setActivePage] = useState<'main' | 'admin' | 'privacy' | 'terms' | 'pricing'>(() => {
+  const [activePage, setActivePage] = useState<'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund'>(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname;
       if (path === "/admin") return "admin";
       if (path === "/privacy") return "privacy";
       if (path === "/terms") return "terms";
       if (path === "/pricing") return "pricing";
+      if (path === "/refund") return "refund";
     }
     return "main";
   });
@@ -62,7 +65,7 @@ export default function App() {
     isAnonymous: boolean;
   } | null>(null);
 
-  const navigateTo = (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing') => {
+  const navigateTo = (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund') => {
     setActivePage(page);
     if (typeof window !== 'undefined') {
       const newPath = page === 'main' ? '/' : `/${page}`;
@@ -77,6 +80,7 @@ export default function App() {
       else if (path === '/privacy') setActivePage('privacy');
       else if (path === '/terms') setActivePage('terms');
       else if (path === '/pricing') setActivePage('pricing');
+      else if (path === '/refund') setActivePage('refund');
       else setActivePage('main');
     };
     window.addEventListener('popstate', handlePopState);
@@ -707,15 +711,20 @@ export default function App() {
   if (activePage === 'terms') {
     return <TermsPage onBack={() => navigateTo('main')} />;
   }
+  if (activePage === 'refund') {
+    return <RefundPage onBack={() => navigateTo('main')} />;
+  }
   if (activePage === 'pricing') {
     return (
       <PricingLandingView
         onBackToApp={() => navigateTo('main')}
+        onNavigateTo={navigateTo}
         onHireDeveloper={() => setIsHireOpen(true)}
         onSelectFreePitch={(freeConcept) => {
           if (freeConcept) setConcept(freeConcept);
           navigateTo('main');
         }}
+        currentUser={currentUser}
       />
     );
   }
@@ -1118,29 +1127,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Global Footer */}
-      <footer className="bg-slate-950 border-t border-slate-900 py-8 mt-16 shrink-0 z-40 relative">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-500">
-          <p>© 2026 Magneto. Engineered with elite precision.</p>
-          <div className="flex flex-wrap items-center justify-center gap-6">
-            <button onClick={() => navigateTo('privacy')} className="hover:text-indigo-400 font-medium transition cursor-pointer">Privacy Policy</button>
-            <button onClick={() => navigateTo('terms')} className="hover:text-indigo-400 font-medium transition cursor-pointer">User Agreement</button>
-            <button onClick={() => navigateTo('pricing')} className="hover:text-indigo-400 font-bold transition cursor-pointer flex items-center gap-1">
-              Pricing & MOR (2 Free)
-            </button>
-            <button onClick={() => setIsHireOpen(true)} className="hover:text-purple-400 font-bold transition cursor-pointer">Hire Developer ($450)</button>
-            {ENABLE_ADMIN && (
-              <button 
-                onClick={() => navigateTo('admin')} 
-                onMouseEnter={() => { import("./components/admin/AdminControl").catch(() => {}); }}
-                className="hover:text-amber-400 font-mono text-[10px] uppercase font-black tracking-wider transition cursor-pointer border border-slate-800/80 px-2 py-0.5 rounded bg-slate-900"
-              >
-                Admin
-              </button>
-            )}
-          </div>
-        </div>
-      </footer>
+      {/* Global Compliance Footer */}
+      <ComplianceFooter onNavigateTo={navigateTo} />
 
       {/* Additive widgets and modals */}
       <FeedbackWidget userId={userId} />

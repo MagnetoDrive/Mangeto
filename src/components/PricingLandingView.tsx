@@ -24,11 +24,13 @@ import {
   AlertCircle
 } from "lucide-react";
 import { DodoPayments } from "dodopayments-checkout";
+import ComplianceFooter from "./ComplianceFooter";
 
 interface PricingLandingViewProps {
   onBackToApp?: () => void;
   onSelectFreePitch?: (concept: string) => void;
   onHireDeveloper?: () => void;
+  onNavigateTo?: (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund') => void;
   currentUser?: {
     uid: string;
     email: string | null;
@@ -41,6 +43,7 @@ export default function PricingLandingView({
   onBackToApp, 
   onSelectFreePitch,
   onHireDeveloper,
+  onNavigateTo,
   currentUser 
 }: PricingLandingViewProps) {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -60,7 +63,7 @@ export default function PricingLandingView({
   // Merchant of Record (MOR) Pitches for Dodo Payments
   const morPitch1 = `Magneto is an AI-powered Video Pitch & Scriptwriting SaaS platform that converts raw product concepts into high-converting video scripts, teleprompter workflows, and marketing collateral using Gemini AI orchestration. Delivered as a cloud-based SaaS subscription with instant digital entitlement, automated license provisioning, strict data privacy compliance, and zero physical fulfillment risk, engineered for Dodo Payments Merchant of Record standards.`;
 
-  const morPitch2 = `7-Day Custom Software Sprint is a flat-rate $450 USD digital product development service providing bespoke SaaS feature engineering, API integrations, and custom web application workflows. Features guaranteed delivery within 7 calendar days, direct senior developer collaboration, transparent milestone sign-off, and clear digital service terms compliant with Dodo Payments MOR standards.`;
+  const morPitch2 = `Magneto Scale & Automation is an automated cloud software subscription providing high-volume AI pitch deck processing, automated script generation, voiceover synchronization, and interactive teleprompter access. Features instant digital credit allocation upon checkout, automated recurring billing via Dodo Payments Merchant of Record, self-service cancellation, and clear 14-day refund conditions with zero manual fulfillment delays.`;
 
   const handleCopyMorPitch = (text: string, pitchNum: 1 | 2) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -160,20 +163,20 @@ export default function PricingLandingView({
       a: "Dodo Payments acts as our Merchant of Record, handling global EU VAT, sales tax compliance, multi-currency conversion, local payment methods, and PCI-DSS compliant secure credit card and banking checkouts. You get instant invoices and seamless management."
     },
     {
-      q: "How do the 2 Free Pitches work?",
-      a: "Every new account automatically receives 2 Free AI Video Pitches with full teleprompter and hook engine access—no credit card or upfront commitment required. Upgrade to Pro whenever you need unlimited pitches."
+      q: "How do the free credits work?",
+      a: "Every new account automatically receives free AI Generation Credits with full teleprompter and script engine access—no credit card or upfront commitment required. Upgrade to Pro whenever you need high-volume generation."
     },
     {
       q: "Can I use the pre-written MOR Pitches for my own Dodo Payments store?",
       a: "Yes! If you are applying to Dodo Payments or other MoRs as a vendor to sell software or digital services, copy our 2 pre-formatted MOR pitch templates above. They are engineered to satisfy MOR risk & compliance requirements."
     },
     {
-      q: "What is included in the $450 7-Day Developer Sprint?",
-      a: "You get a dedicated senior developer (Tsepo Motsatse) for 7 full days to build custom SaaS features, integrations, or standalone tools for your business. It is a flat-rate single payment with zero hidden fees."
+      q: "How does self-service software delivery work?",
+      a: "Magneto is a 100% automated self-service SaaS platform. Immediately upon checkout, your monthly AI generation credits are unlocked in your account. All script generation, teleprompter syncing, and scene overlays execute automatically in your browser with zero manual turnaround or waiting time."
     },
     {
-      q: "Can I cancel my subscription anytime?",
-      a: "Absolutely. You can manage or cancel your subscription at any time with 1-click through your Dodo Payments customer portal."
+      q: "What is your refund and cancellation policy?",
+      a: "You can cancel your software subscription at any time with 1-click in your customer billing dashboard or Dodo Payments portal. We also offer full 100% refunds within 14 days of purchase if your monthly generation credits remain unused. For assistance, contact tsepomotsatse@gmail.com."
     }
   ];
 
@@ -207,7 +210,7 @@ export default function PricingLandingView({
               className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-indigo-600/20 cursor-pointer hidden sm:inline-flex items-center gap-1"
             >
               <Zap className="w-3.5 h-3.5" />
-              Get Started
+              Get Instant Access
             </a>
           </div>
         </div>
@@ -219,32 +222,72 @@ export default function PricingLandingView({
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-20 right-10 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-xs font-mono uppercase font-bold tracking-wider animate-pulse">
-          <Gift className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Includes 2 Free Pitches • Powered by Dodo Payments MOR</span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-xs font-mono uppercase font-bold tracking-wider">
+          <Zap className="w-3.5 h-3.5 text-indigo-400" />
+          <span>100% Automated Self-Service SaaS • Instant Digital Entitlement</span>
         </div>
 
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-100 leading-tight max-w-4xl mx-auto">
-          Predictable Pricing for High-Converting <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">AI Video Pitches</span>
+          Automated AI Pitch Deck to Video Generator
         </h1>
 
         <p className="text-sm md:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          Convert product concepts into structured pitch scripts, teleprompter workflows, and marketing campaigns in seconds. Backed by industry-standard Dodo Payments Merchant of Record (MOR) compliance.
+          Instantly transform pitch decks and sales presentations into short-form video scripts, automated scene overlays, and teleprompter workflows powered by AI algorithms.
         </p>
+
+        {/* Self-service Action Buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          {onBackToApp && (
+            <button
+              onClick={onBackToApp}
+              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/25 flex items-center gap-2 cursor-pointer"
+            >
+              <Zap className="w-4 h-4" />
+              Try Free AI Generator
+            </button>
+          )}
+          <a
+            href="#pricing-tiers"
+            className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs rounded-xl border border-slate-700 transition flex items-center gap-2 cursor-pointer"
+          >
+            <CreditCard className="w-4 h-4 text-emerald-400" />
+            Start Software Subscription
+          </a>
+        </div>
+
+        {/* Software Automation Feature Highlights */}
+        <div className="pt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-slate-300 font-medium max-w-4xl mx-auto">
+          <div className="flex items-center justify-center gap-2 bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+            <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />
+            <span className="text-center">Instant AI Script & Scene Generation</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+            <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
+            <span className="text-center">Automated Voiceover Sync</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="text-center">Interactive Browser Teleprompter</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+            <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
+            <span className="text-center">100% Automated Self-Service Processing</span>
+          </div>
+        </div>
 
         {/* MOR Compliance Trust Badges */}
         <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 font-mono">
-          <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg">
+          <div className="flex items-center gap-1.5 bg-slate-900/60 border border-slate-800/80 px-3 py-1.5 rounded-lg">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
             <span>Dodo Payments Merchant of Record</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg">
+          <div className="flex items-center gap-1.5 bg-slate-900/60 border border-slate-800/80 px-3 py-1.5 rounded-lg">
             <CreditCard className="w-4 h-4 text-sky-400" />
-            <span>1-Click Checkout Overlay</span>
+            <span>Instant Digital Entitlement</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg">
+          <div className="flex items-center gap-1.5 bg-slate-900/60 border border-slate-800/80 px-3 py-1.5 rounded-lg">
             <Lock className="w-4 h-4 text-amber-400" />
-            <span>Global EU VAT & Tax Handled</span>
+            <span>Global EU VAT & Sales Tax Handled</span>
           </div>
         </div>
       </section>
@@ -406,9 +449,9 @@ export default function PricingLandingView({
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between relative hover:border-slate-700 transition">
             <div className="space-y-4">
               <div className="space-y-1">
-                <span className="text-xs font-mono uppercase font-bold text-slate-400">Free Tier</span>
-                <h3 className="text-xl font-bold text-slate-100">Starter Creator</h3>
-                <p className="text-xs text-slate-400">Perfect for trying out video pitches</p>
+                <span className="text-xs font-mono uppercase font-bold text-slate-400">Free Starter</span>
+                <h3 className="text-xl font-bold text-slate-100">Starter Automation</h3>
+                <p className="text-xs text-slate-400">Self-service evaluation & trial generation</p>
               </div>
 
               <div className="flex items-baseline gap-1">
@@ -421,36 +464,41 @@ export default function PricingLandingView({
               <ul className="space-y-2.5 text-xs text-slate-300">
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span><strong>2 Free AI Video Pitches</strong> per month</span>
+                  <span><strong>10 AI Generation Credits / Month</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Standard Teleprompter studio</span>
+                  <span><strong>Instant AI Script & Scene Generation</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>15 Hook formulas per campaign</span>
+                  <span><strong>Interactive Browser Teleprompter</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Basic Storyboard preview</span>
+                  <span><strong>100% Automated Self-Service Processing</strong></span>
                 </li>
-                <li className="flex items-center gap-2 text-slate-500">
-                  <Check className="w-4 h-4 text-slate-700 shrink-0" />
-                  <span>Standard exports</span>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Standard Voiceover & Audio Sync</span>
+                </li>
+                <li className="flex items-center gap-2 text-slate-400">
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Instant HD Export</span>
                 </li>
               </ul>
             </div>
 
             <button
               onClick={onBackToApp}
-              className="mt-8 w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition border border-slate-700 flex items-center justify-center gap-1.5 cursor-pointer"
+              className="mt-8 w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-md shadow-indigo-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              Get Started Free (2 Pitches Included)
+              <Zap className="w-4 h-4" />
+              Try Free AI Generator
             </button>
           </div>
 
-          {/* Card 2: Pro Storyteller (Most Popular) */}
+          {/* Card 2: Pro Plan (Most Popular) */}
           <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950/40 border-2 border-indigo-500 rounded-2xl p-6 flex flex-col justify-between relative shadow-2xl shadow-indigo-600/20 scale-[1.02] z-10">
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-mono uppercase text-[10px] font-bold px-3 py-1 rounded-full shadow-md tracking-wider flex items-center gap-1">
               <Star className="w-3 h-3 fill-white" />
@@ -459,9 +507,9 @@ export default function PricingLandingView({
 
             <div className="space-y-4 pt-2">
               <div className="space-y-1">
-                <span className="text-xs font-mono uppercase font-bold text-indigo-400">Pro Plan</span>
-                <h3 className="text-xl font-bold text-slate-100">Pro Storyteller</h3>
-                <p className="text-xs text-slate-400">For active creators, SaaS founders & marketers</p>
+                <span className="text-xs font-mono uppercase font-bold text-indigo-400">Pro Subscription</span>
+                <h3 className="text-xl font-bold text-slate-100">Pro Automation</h3>
+                <p className="text-xs text-slate-400">For creators, SaaS founders & marketing teams</p>
               </div>
 
               <div className="flex items-baseline gap-1">
@@ -478,27 +526,31 @@ export default function PricingLandingView({
               <ul className="space-y-2.5 text-xs text-slate-300">
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span><strong>Unlimited AI Video Pitches</strong></span>
+                  <span><strong>150 AI Generation Credits / Month</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Advanced Gemini 1.5 Pro AI Engine</span>
+                  <span><strong>Instant AI Script & Scene Generation</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>4K Visual Storyboards & Scene Images</span>
+                  <span><strong>Automated Voiceover Sync</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Full Marketing Kit & Launch Deploy</span>
+                  <span><strong>Interactive Browser Teleprompter</strong> with AI Speed Tracking</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Dodo Payments Checkout Overlay Sync</span>
+                  <span><strong>Instant HD Export</strong> & 4K Scene Visuals</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span>Priority Processing & Support</span>
+                  <span><strong>100% Automated Self-Service Processing</strong></span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-indigo-400 shrink-0" />
+                  <span>Instant Digital Entitlement & License Sync</span>
                 </li>
               </ul>
             </div>
@@ -513,17 +565,17 @@ export default function PricingLandingView({
               ) : (
                 <CreditCard className="w-4 h-4" />
               )}
-              <span>{checkoutLoading === 'Pro' ? "Preparing Checkout..." : "Subscribe with Dodo Payments"}</span>
+              <span>{checkoutLoading === 'Pro' ? "Preparing Checkout..." : "Start Software Subscription"}</span>
             </button>
           </div>
 
-          {/* Card 3: Agency & Scale */}
+          {/* Card 3: Scale Plan */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between relative hover:border-slate-700 transition">
             <div className="space-y-4">
               <div className="space-y-1">
-                <span className="text-xs font-mono uppercase font-bold text-purple-400">Agency Tier</span>
-                <h3 className="text-xl font-bold text-slate-100">Agency & Scale</h3>
-                <p className="text-xs text-slate-400">For teams managing multiple client accounts</p>
+                <span className="text-xs font-mono uppercase font-bold text-purple-400">Scale Subscription</span>
+                <h3 className="text-xl font-bold text-slate-100">Scale Automation</h3>
+                <p className="text-xs text-slate-400">For high-volume production & automated pipelines</p>
               </div>
 
               <div className="flex items-baseline gap-1">
@@ -540,23 +592,31 @@ export default function PricingLandingView({
               <ul className="space-y-2.5 text-xs text-slate-300">
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span><strong>Everything in Pro</strong> + Multi-Client Workspaces</span>
+                  <span><strong>500 AI Generation Credits / Month</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span>Custom Brand Voices & Tone Customization</span>
+                  <span><strong>Instant AI Script & Scene Generation (Parallel Queue)</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span>Deck Summarizer AI & Bulk Export</span>
+                  <span><strong>Automated Voiceover Sync (Multi-Voice Engine)</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span>Merchant of Record (MOR) Store Onboarding Kit</span>
+                  <span><strong>Interactive Browser Teleprompter</strong></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span>Dedicated Slack / Discord Channel</span>
+                  <span><strong>Instant HD Export</strong> with Custom Brand Presets</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-400 shrink-0" />
+                  <span><strong>100% Automated Self-Service Processing</strong></span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-400 shrink-0" />
+                  <span>Priority High-Concurrency Server Processing</span>
                 </li>
               </ul>
             </div>
@@ -564,39 +624,39 @@ export default function PricingLandingView({
             <button
               onClick={() => handleDodoCheckout('Agency')}
               disabled={checkoutLoading === 'Agency'}
-              className="mt-8 w-full py-3 bg-purple-900/50 hover:bg-purple-900/80 text-purple-200 text-xs font-bold rounded-xl border border-purple-700/50 transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+              className="mt-8 w-full py-3 bg-purple-900/60 hover:bg-purple-800/80 text-purple-200 text-xs font-bold rounded-xl border border-purple-700/50 transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
             >
               {checkoutLoading === 'Agency' ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <Rocket className="w-4 h-4" />
               )}
-              <span>{checkoutLoading === 'Agency' ? "Preparing Checkout..." : "Subscribe Agency with Dodo Payments"}</span>
+              <span>{checkoutLoading === 'Agency' ? "Preparing Checkout..." : "Start Software Subscription"}</span>
             </button>
           </div>
 
         </div>
 
-        {/* Flat-rate 7-Day Developer Sprint Highlight */}
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        {/* 100% Automated SaaS Guarantee & Instant Cloud Delivery */}
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950/30 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
-            <div className="inline-flex items-center gap-1.5 text-xs font-mono uppercase font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded">
-              <Clock className="w-3.5 h-3.5" />
-              Flat-Rate Custom Software Option
+            <div className="inline-flex items-center gap-1.5 text-xs font-mono uppercase font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              100% Automated Self-Service Guarantee
             </div>
-            <h3 className="text-xl font-extrabold text-slate-100">Need Custom Features or Custom Software? 🚀</h3>
+            <h3 className="text-xl font-extrabold text-slate-100">Zero Turnaround Delays • Instant Cloud Access</h3>
             <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-              Get a dedicated senior fullstack developer (Tsepo Motsatse) to build your custom feature, integration, or standalone web app in 7 days or less for a flat rate of $450.
+              All subscription plans deliver immediate digital software access upon checkout. Generate scripts, sync voiceovers, and rehearse on the interactive teleprompter in seconds. Cancel anytime in your dashboard with a 14-day refund window on unused generation credits.
             </p>
           </div>
 
-          <button
-            onClick={onHireDeveloper}
-            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-emerald-600/20 shrink-0 flex items-center gap-2 cursor-pointer"
+          <a
+            href="#pricing-tiers"
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/20 shrink-0 flex items-center gap-2 cursor-pointer"
           >
-            <CreditCard className="w-4 h-4" />
-            Hire Developer ($450 Single Payment)
-          </button>
+            <Zap className="w-4 h-4" />
+            Select Plan
+          </a>
         </div>
       </section>
 
@@ -640,9 +700,9 @@ export default function PricingLandingView({
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <span className="text-xs font-mono font-bold text-purple-400 uppercase">MOR Pitch Template #2</span>
-                <span className="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded">Digital Service / Sprint Pitch</span>
+                <span className="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded">Scale Software Subscription Pitch</span>
               </div>
-              <h3 className="text-sm font-bold text-slate-200">Dodo Payments Custom Sprint Pitch</h3>
+              <h3 className="text-sm font-bold text-slate-200">Dodo Payments Scale SaaS Pitch</h3>
               <p className="text-xs text-slate-300 leading-relaxed bg-slate-950 p-3.5 rounded-xl border border-slate-850 font-mono text-[11px]">
                 {morPitch2}
               </p>
@@ -653,7 +713,7 @@ export default function PricingLandingView({
               className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-bold rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer"
             >
               {copiedPitch2 ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-              {copiedPitch2 ? "MOR Pitch #2 Copied!" : "Copy MOR Sprint Pitch"}
+              {copiedPitch2 ? "MOR Pitch #2 Copied!" : "Copy MOR Scale Pitch"}
             </button>
           </div>
         </div>
@@ -663,7 +723,7 @@ export default function PricingLandingView({
       <section className="max-w-4xl mx-auto px-4 mb-20 space-y-6">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-extrabold text-slate-100">Frequently Asked Questions</h2>
-          <p className="text-xs text-slate-400">Everything you need to know about billing, MOR compliance, and free credits.</p>
+          <p className="text-xs text-slate-400">Everything you need to know about billing, MOR compliance, and self-service software access.</p>
         </div>
 
         <div className="space-y-3">
@@ -690,25 +750,10 @@ export default function PricingLandingView({
         </div>
       </section>
 
-      {/* CTA Footer Section */}
-      <section className="max-w-4xl mx-auto px-4 text-center space-y-4 pt-8 border-t border-slate-900">
-        <h3 className="text-xl font-bold text-slate-100">Ready to Elevate Your Video Pitches?</h3>
-        <p className="text-xs text-slate-400 max-w-md mx-auto">
-          Start with 2 free pitches or upgrade to Pro for unlimited AI video pitch generation.
-        </p>
-
-        <div className="flex justify-center gap-3 pt-2">
-          {onBackToApp && (
-            <button
-              onClick={onBackToApp}
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-indigo-600/25 flex items-center gap-2 cursor-pointer"
-            >
-              <Zap className="w-4 h-4" />
-              Launch Magneto Workspace
-            </button>
-          )}
-        </div>
-      </section>
+      {/* Compliance Footer with full legal policies, refund terms, and contact info */}
+      <ComplianceFooter onNavigateTo={onNavigateTo || ((page) => {
+        if (page === 'main' && onBackToApp) onBackToApp();
+      })} />
     </div>
   );
 }
