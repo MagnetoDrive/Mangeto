@@ -154,7 +154,7 @@ export default function RefundPage({ onBack, onNavigateTo }: RefundPageProps) {
                 tsepomotsatse@gmail.com
               </a>
               <p className="text-xs text-slate-400 pt-1">
-                Please include your registered email address and transaction reference ID. All refund requests are reviewed and processed within 24–48 business hours.
+                Please include your registered email address and transaction reference ID. All refund requests are reviewed and processed within 24 to 48 business hours.
               </p>
             </div>
           </section>

@@ -12,6 +12,7 @@ interface SavedProjectsProps {
   onLaunchTutorial: () => void;
   onHireDeveloper: () => void;
   onOpenPricing?: () => void;
+  onOpenBilling?: () => void;
   currentUser?: {
     uid: string;
     email: string | null;
@@ -32,6 +33,7 @@ export default function SavedProjects({
   onLaunchTutorial,
   onHireDeveloper,
   onOpenPricing,
+  onOpenBilling,
   currentUser,
   onOpenAuth,
   onSignOut,
@@ -81,6 +83,20 @@ export default function SavedProjects({
                     </div>
                   </div>
 
+                  {onOpenBilling && (
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onOpenBilling();
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-semibold text-indigo-300 hover:bg-slate-800/80 rounded-lg transition flex items-center gap-2 cursor-pointer"
+                      id="btn_user_billing"
+                    >
+                      <CreditCard className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Billing & Subscriptions</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       setIsUserMenuOpen(false);
@@ -111,13 +127,24 @@ export default function SavedProjects({
               onClick={onOpenPricing}
               className="px-3 py-1.5 bg-indigo-950/70 hover:bg-indigo-900/90 text-indigo-300 hover:text-indigo-200 rounded-md text-xs font-semibold border border-indigo-800/60 transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
               id="btn_header_pricing_mor"
-              title="View Plans, Lemon Squeezy & Paddle MOR Pitches"
+              title="View Whop Pricing Plans"
             >
               <CreditCard className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Pricing & MOR</span>
+              <span>Pricing</span>
               <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border border-emerald-500/30">
-                2 Free
+                Whop
               </span>
+            </button>
+          )}
+
+          {onOpenBilling && (
+            <button
+              onClick={onOpenBilling}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+              id="btn_header_billing"
+              title="Manage Whop Subscription & Entitlements"
+            >
+              <span>Billing</span>
             </button>
           )}
 

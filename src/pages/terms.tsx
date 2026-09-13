@@ -77,7 +77,7 @@ export default function TermsPage({ onBack }: TermsProps) {
               Magneto subscriptions provide monthly software generation credits and interactive teleprompter access. Subscriptions renew automatically on a recurring monthly or annual basis until canceled.
             </p>
             <p>
-              All purchases, billing cycles, sales tax, EU VAT, and payment processing are handled securely by our Merchant of Record – <strong>Dodo Payments</strong>.
+              All purchases, billing cycles, sales tax, EU VAT, and payment processing are handled securely by our official payment processor: <strong>Whop</strong>.
             </p>
             <p>
               You can cancel your recurring software subscription at any time with 1 click directly in your customer dashboard or via the Dodo Payments customer portal. Cancellation takes effect at the conclusion of the active paid billing period.

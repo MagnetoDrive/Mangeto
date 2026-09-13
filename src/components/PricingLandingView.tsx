@@ -150,7 +150,7 @@ export default function PricingLandingView({
           title: "Pitch #2: 'Before-After-Bridge' UGC Social Pitch",
           hook: `I used to spend 4 hours rewriting script hooks before recording a single video.`,
           body: `Then I discovered ${sampleConcept}. Now I enter my idea, get 15 viral hooks instantly, and record with an in-app teleprompter. It cuts creation time by 80%.`,
-          cta: `Try 2 Pitches 100% Free—no credit card required!`
+          cta: `Try 2 Pitches 100% Free: no credit card required!`
         }
       ]);
       setIsGeneratingDemo(false);
@@ -164,7 +164,7 @@ export default function PricingLandingView({
     },
     {
       q: "How do the free credits work?",
-      a: "Every new account automatically receives free AI Generation Credits with full teleprompter and script engine access—no credit card or upfront commitment required. Upgrade to Pro whenever you need high-volume generation."
+      a: "Every new account automatically receives free AI Generation Credits with full teleprompter and script engine access: no credit card or upfront commitment required. Upgrade to Pro whenever you need high-volume generation."
     },
     {
       q: "Can I use the pre-written MOR Pitches for my own Dodo Payments store?",

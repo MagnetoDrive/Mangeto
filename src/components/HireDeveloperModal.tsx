@@ -184,7 +184,7 @@ export default function HireDeveloperModal({ isOpen, onClose }: HireDeveloperMod
                 Direct Communication
               </div>
               <p className="text-slate-400 text-[11px] leading-relaxed">
-                Work directly with the developer—no account managers or middle layers.
+                Work directly with the developer, with no account managers or middle layers.
               </p>
             </div>
 

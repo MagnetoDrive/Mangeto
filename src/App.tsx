@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
-import { Sparkles, MessageSquare, AlertCircle, RefreshCw, Zap, CheckCircle, Video, Layers, Mail, Tv, Github, Globe } from "lucide-react";
+import { Sparkles, MessageSquare, AlertCircle, RefreshCw, Zap, CheckCircle, Video, Layers, Mail, Tv, Github, Globe, X, CreditCard } from "lucide-react";
 import { Hook, Script, StoryboardScene, MarketingKit, Project } from "./types";
 import SavedProjects from "./components/SavedProjects";
 import HookEngineView from "./components/HookEngineView";
@@ -11,7 +11,7 @@ import LaunchDeployView from "./components/LaunchDeployView";
 import CompanionChat from "./components/CompanionChat";
 import TutorialWizard from "./components/TutorialWizard";
 import { auth, initializeAnonymousSession, db } from "./lib/firebase";
-import { subscribeToAuth, signOutUser, syncUserProfile } from "./lib/auth";
+import { subscribeToAuth, signOutUser, syncUserProfile, incrementProjectsUsed } from "./lib/auth";
 import { fetchUserProjects, saveProjectToFirestore, deleteProjectFromFirestore } from "./lib/db";
 import { safeStorage } from "./lib/storage";
 import { setDoc, doc } from "firebase/firestore";
@@ -21,6 +21,8 @@ const AdminControl = lazy(() => import("./components/admin/AdminControl"));
 import PrivacyPage from "./pages/privacy";
 import TermsPage from "./pages/terms";
 import RefundPage from "./pages/refund";
+import PricingPage from "./pages/PricingPage";
+import BillingPage from "./pages/BillingPage";
 import ComplianceFooter from "./components/ComplianceFooter";
 import HireDeveloperModal from "./components/HireDeveloperModal";
 import FeedbackWidget from "./components/FeedbackWidget";
@@ -45,7 +47,7 @@ export default function App() {
   const [userId, setUserId] = useState<string | null>(null);
 
   // Active page routing and modal states
-  const [activePage, setActivePage] = useState<'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund'>(() => {
+  const [activePage, setActivePage] = useState<'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing'>(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname;
       if (path === "/admin") return "admin";
@@ -53,6 +55,7 @@ export default function App() {
       if (path === "/terms") return "terms";
       if (path === "/pricing") return "pricing";
       if (path === "/refund") return "refund";
+      if (path === "/billing") return "billing";
     }
     return "main";
   });
@@ -65,7 +68,7 @@ export default function App() {
     isAnonymous: boolean;
   } | null>(null);
 
-  const navigateTo = (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund') => {
+  const navigateTo = (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing') => {
     setActivePage(page);
     if (typeof window !== 'undefined') {
       const newPath = page === 'main' ? '/' : `/${page}`;
@@ -81,6 +84,7 @@ export default function App() {
       else if (path === '/terms') setActivePage('terms');
       else if (path === '/pricing') setActivePage('pricing');
       else if (path === '/refund') setActivePage('refund');
+      else if (path === '/billing') setActivePage('billing');
       else setActivePage('main');
     };
     window.addEventListener('popstate', handlePopState);
@@ -101,6 +105,13 @@ export default function App() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [authToast, setAuthToast] = useState<string | null>(null);
 
+  // User subscription & trial gating states
+  const [userPlan, setUserPlan] = useState<string>("Free");
+  const [projectsUsed, setProjectsUsed] = useState<number>(0);
+  const [projectsLimit, setProjectsLimit] = useState<number>(2);
+  const [isSubscribePromptOpen, setIsSubscribePromptOpen] = useState(false);
+  const [pendingHook, setPendingHook] = useState<Hook | null>(null);
+
   // Tutorial wizard and live streaming feed parameters
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [streamingText, setStreamingText] = useState("");
@@ -120,6 +131,10 @@ export default function App() {
     const unsubscribe = subscribeToAuth(async (user) => {
       if (user) {
         const profile = await syncUserProfile(user);
+        const planName = profile.planStatus || "Free";
+        setUserPlan(planName);
+        setProjectsUsed(profile.projectsUsed ?? 0);
+        setProjectsLimit(profile.projectsLimit ?? (planName === "Pro" ? 250 : planName === "Starter" ? 50 : 2));
         setCurrentUser({
           uid: user.uid,
           email: user.email,
@@ -199,6 +214,7 @@ export default function App() {
         }
       } else {
         setCurrentUser(null);
+        setUserPlan("Free");
         initializeAnonymousSession((uid) => {
           setUserId(uid);
         });
@@ -428,6 +444,22 @@ export default function App() {
 
   // 2. Expand selected hook to script
   const handleSelectHookToScript = async (hook: Hook) => {
+    const isPro = userPlan === "Pro";
+    const isStarter = userPlan === "Starter";
+    const effectiveLimit = projectsLimit || (isPro ? 250 : isStarter ? 50 : 2);
+    const currentUsage = Math.max(projectsUsed, projects.length);
+
+    // Block generation if user hits their plan quota (Free: 2, Starter: 50, Pro: 250)
+    if (currentUsage >= effectiveLimit) {
+      setPendingHook(hook);
+      setIsSubscribePromptOpen(true);
+      return;
+    }
+
+    await executeGenerateScriptAndPlan(hook);
+  };
+
+  const executeGenerateScriptAndPlan = async (hook: Hook) => {
     const startTime = Date.now();
     setSelectedHookId(hook.id);
     setSelectedHookText(hook.text);
@@ -557,6 +589,16 @@ export default function App() {
           saveProjectsToStore(updatedProjects, updatedProject);
         }
 
+        // Increment user projects quota count
+        if (userId) {
+          try {
+            const updatedQuota = await incrementProjectsUsed(userId);
+            setProjectsUsed(updatedQuota);
+          } catch (cntErr) {
+            console.warn("Could not increment quota:", cntErr);
+          }
+        }
+
         const latency = Date.now() - startTime;
         console.log(`[Module generate-script-and-plan] Stream fully executed in ${latency}ms`);
 
@@ -579,14 +621,14 @@ export default function App() {
         const fallbackScript = {
           title: `${concept || "Campaign"} - High Converting Script`,
           spokenSeconds: parseSeconds(length),
-          scriptText: `[PAUSE] ${hook.text} [EMPHASIS] Most ${audience || "teams"} spend hours struggling with inefficient workflows that drag down conversion rates. With our proven framework, you can ${outcome || "scale growth"} automatically. [PAUSE] Step one eliminates friction, step two optimizes conversions, and step three locks in sustainable compounding growth. [EMPHASIS] Don't wait—click below and transform your results today!`,
+          scriptText: `[PAUSE] ${hook.text} [EMPHASIS] Most ${audience || "teams"} spend hours struggling with inefficient workflows that drag down conversion rates. With our proven framework, you can ${outcome || "scale growth"} automatically. [PAUSE] Step one eliminates friction, step two optimizes conversions, and step three locks in sustainable compounding growth. [EMPHASIS] Don't wait, click below and transform your results today!`,
           wordCount: 68,
           readingGrade: "6th Grade",
           structuredSegments: [
             { time: "0s - 10s", label: "Hook", text: hook.text },
             { time: "10s - 25s", label: "Problem", text: `Most ${audience || "teams"} spend hours struggling with inefficient workflows that drag down output.` },
             { time: "25s - 45s", label: "Solution", text: `With our proven framework, you can ${outcome || "scale growth"} automatically.` },
-            { time: "45s - 60s", label: "CTA", text: "Don't wait—click below and transform your results today!" }
+            { time: "45s - 60s", label: "CTA", text: "Don't wait, click below and transform your results today!" }
           ]
         };
         const fallbackScenes: StoryboardScene[] = [
@@ -714,16 +756,20 @@ export default function App() {
   if (activePage === 'refund') {
     return <RefundPage onBack={() => navigateTo('main')} />;
   }
+  if (activePage === 'billing') {
+    return (
+      <BillingPage
+        onBack={() => navigateTo('main')}
+        onNavigateTo={navigateTo}
+        currentUser={currentUser}
+      />
+    );
+  }
   if (activePage === 'pricing') {
     return (
-      <PricingLandingView
+      <PricingPage
         onBackToApp={() => navigateTo('main')}
         onNavigateTo={navigateTo}
-        onHireDeveloper={() => setIsHireOpen(true)}
-        onSelectFreePitch={(freeConcept) => {
-          if (freeConcept) setConcept(freeConcept);
-          navigateTo('main');
-        }}
         currentUser={currentUser}
       />
     );
@@ -742,6 +788,7 @@ export default function App() {
         onLaunchTutorial={() => setIsTutorialOpen(true)}
         onHireDeveloper={() => setIsHireOpen(true)}
         onOpenPricing={() => navigateTo('pricing')}
+        onOpenBilling={() => navigateTo('billing')}
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
         onSignOut={async () => {
@@ -1137,6 +1184,100 @@ export default function App() {
         isOpen={isHireOpen} 
         onClose={() => setIsHireOpen(false)} 
       />
+
+      {/* Whop Trial & Subscription Prompt Modal */}
+      {isSubscribePromptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-indigo-500/40 rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 text-left relative">
+            <button 
+              onClick={() => { setIsSubscribePromptOpen(false); setPendingHook(null); }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-12 h-12 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+              <Sparkles className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[11px] font-mono text-indigo-400 uppercase tracking-wider font-bold">
+                {Math.max(projectsUsed, projects.length) >= (userPlan === "Pro" ? 250 : userPlan === "Starter" ? 50 : 2)
+                  ? `${userPlan} Limit Reached`
+                  : "Unlock Full Video Marketing Kit"}
+              </span>
+              <h3 className="text-xl font-bold text-white">
+                {Math.max(projectsUsed, projects.length) >= (userPlan === "Pro" ? 250 : userPlan === "Starter" ? 50 : 2)
+                  ? "Subscribe to continue generating" 
+                  : "Start trial or subscribe on Whop"}
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {userPlan === "Starter" && Math.max(projectsUsed, projects.length) >= 50
+                  ? "You have reached your 50 projects monthly quota on Starter. Upgrade to Pro ($49/mo) for 250 projects per month and team seats."
+                  : Math.max(projectsUsed, projects.length) >= 2
+                    ? "You have used your 2 free campaign kits. Upgrade to Starter ($19/mo) for 50 projects/mo or Pro ($49/mo) for 250 projects/mo on Whop."
+                    : "Generate viral teleprompter scripts, 4-scene video storyboards, and 5-channel marketing kits. Subscribe on Whop or continue with your free trial."
+                }
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <button
+                onClick={() => {
+                  setIsSubscribePromptOpen(false);
+                  navigateTo('pricing');
+                }}
+                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/20"
+                id="btn_modal_whop_pricing"
+              >
+                <CreditCard className="w-4 h-4" />
+                <span>View Plans &amp; Subscribe on Whop</span>
+              </button>
+
+              {Math.max(projectsUsed, projects.length) < (userPlan === "Pro" ? 250 : userPlan === "Starter" ? 50 : 2) && pendingHook && (
+                <button
+                  onClick={() => {
+                    const h = pendingHook;
+                    setIsSubscribePromptOpen(false);
+                    setPendingHook(null);
+                    executeGenerateScriptAndPlan(h);
+                  }}
+                  className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer"
+                  id="btn_modal_continue_free"
+                >
+                  <Sparkles className="w-4 h-4 text-emerald-400" />
+                  <span>Continue with Free Kit ({Math.max(0, 2 - Math.max(projectsUsed, projects.length))} remaining)</span>
+                </button>
+              )}
+
+              {!currentUser && (
+                <button
+                  onClick={() => {
+                    setIsSubscribePromptOpen(false);
+                    setIsAuthOpen(true);
+                  }}
+                  className="w-full py-2.5 px-4 text-xs font-semibold text-slate-400 hover:text-white transition text-center cursor-pointer"
+                >
+                  Already have an account? Sign In
+                </button>
+              )}
+
+              {currentUser && (
+                <button
+                  onClick={() => {
+                    setIsSubscribePromptOpen(false);
+                    navigateTo('billing');
+                  }}
+                  className="w-full py-2.5 px-4 text-xs font-semibold text-slate-400 hover:text-white transition text-center cursor-pointer"
+                >
+                  Have a Whop license key? Redeem in Billing Hub
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <AuthModal
         isOpen={isAuthOpen}

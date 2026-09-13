@@ -110,7 +110,7 @@ export default function HookEngineView({
       ) : hooks.length === 0 ? (
         <div className="py-16 text-center border border-dashed border-slate-800 rounded-xl space-y-3">
           <AlertCircle className="w-10 h-10 text-slate-600 mx-auto" />
-          <p className="text-sm text-slate-400 font-semibold">Magneto — Pull attention. Keep it.</p>
+          <p className="text-sm text-slate-400 font-semibold">Magneto: Pull attention. Keep it.</p>
           <p className="text-xs text-slate-500 max-w-sm mx-auto font-mono">
             Input your concept profile on the left control panel, then press "Formulate 15 Hooks" or brainstorm with Magneto Copilot.
           </p>

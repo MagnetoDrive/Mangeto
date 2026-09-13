@@ -2,7 +2,7 @@ import React from "react";
 import { ShieldCheck, Mail, RotateCcw, FileText, CheckCircle2, Zap } from "lucide-react";
 
 interface ComplianceFooterProps {
-  onNavigateTo: (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund') => void;
+  onNavigateTo: (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing') => void;
   enableAdmin?: boolean;
 }
 
@@ -79,6 +79,12 @@ export default function ComplianceFooter({ onNavigateTo, enableAdmin = true }: C
               className="hover:text-indigo-400 font-medium transition cursor-pointer"
             >
               Pricing & Plans
+            </button>
+            <button
+              onClick={() => onNavigateTo('billing')}
+              className="hover:text-indigo-300 font-medium transition cursor-pointer"
+            >
+              Billing
             </button>
             {enableAdmin && (
               <button

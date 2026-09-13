@@ -631,7 +631,7 @@ export default function TeleprompterView({
               >
                 <div className="flex items-center justify-center gap-2">
                   <span className="inline-block py-0.5 px-2.5 bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-mono font-bold rounded-full uppercase">
-                    {seg.time} — {seg.label}
+                    {seg.time} | {seg.label}
                   </span>
 
                   {/* Segment Audio Listen Button */}

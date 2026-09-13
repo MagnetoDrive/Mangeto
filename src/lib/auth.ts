@@ -18,9 +18,18 @@ export interface UserProfile {
   displayName: string | null;
   photoURL: string | null;
   planStatus: string;
+  plan?: string;
+  status?: string;
+  projectsUsed?: number;
+  projectsLimit?: number;
+  renewalDate?: string;
   createdAt: string;
   lastActive: string;
   isAnonymous: boolean;
+  whopCustomerId?: string;
+  whopSubscriptionId?: string;
+  whopPlanId?: string;
+  whopLicenseKey?: string;
 }
 
 /**
@@ -64,12 +73,36 @@ export async function syncUserProfile(user: User, customDisplayName?: string): P
   const userRef = doc(db, "users", user.uid);
   const now = new Date().toISOString();
   let existingPlan = "Free";
+  let existingPlanKey = "free";
+  let existingStatus = "active";
+  let projectsUsed = 0;
+  let projectsLimit = 2;
+  let renewalDate = "Renews monthly";
+  let whopCustomerId: string | undefined;
+  let whopSubscriptionId: string | undefined;
+  let whopPlanId: string | undefined;
+  let whopLicenseKey: string | undefined;
 
   try {
     const snap = await getDoc(userRef);
     if (snap.exists()) {
       const data = snap.data();
-      existingPlan = data.planStatus || "Free";
+      existingPlan = data.planStatus || (data.plan ? (data.plan.charAt(0).toUpperCase() + data.plan.slice(1)) : "Free");
+      existingPlanKey = data.plan || existingPlan.toLowerCase();
+      existingStatus = data.status || "active";
+      projectsUsed = typeof data.projectsUsed === "number" ? data.projectsUsed : 0;
+      
+      if (typeof data.projectsLimit === "number") {
+        projectsLimit = data.projectsLimit;
+      } else {
+        projectsLimit = existingPlan === "Pro" ? 250 : existingPlan === "Starter" ? 50 : 2;
+      }
+
+      renewalDate = data.renewalDate || "Renews monthly";
+      whopCustomerId = data.whopCustomerId || data.whopUserId;
+      whopSubscriptionId = data.whopSubscriptionId;
+      whopPlanId = data.whopPlanId;
+      whopLicenseKey = data.whopLicenseKey;
     }
   } catch (err) {
     console.warn("Could not read user doc prior to sync:", err);
@@ -83,9 +116,18 @@ export async function syncUserProfile(user: User, customDisplayName?: string): P
     displayName,
     photoURL: user.photoURL || null,
     planStatus: existingPlan,
+    plan: existingPlanKey,
+    status: existingStatus,
+    projectsUsed,
+    projectsLimit,
+    renewalDate,
     createdAt: now,
     lastActive: now,
-    isAnonymous: user.isAnonymous
+    isAnonymous: user.isAnonymous,
+    whopCustomerId,
+    whopSubscriptionId,
+    whopPlanId,
+    whopLicenseKey
   };
 
   try {
@@ -95,6 +137,11 @@ export async function syncUserProfile(user: User, customDisplayName?: string): P
       displayName: profile.displayName,
       photoURL: profile.photoURL,
       planStatus: profile.planStatus,
+      plan: profile.plan,
+      status: profile.status,
+      projectsUsed: profile.projectsUsed,
+      projectsLimit: profile.projectsLimit,
+      renewalDate: profile.renewalDate,
       lastActive: now,
       ...(user.isAnonymous ? {} : { registeredUser: true })
     }, { merge: true });
@@ -103,6 +150,30 @@ export async function syncUserProfile(user: User, customDisplayName?: string): P
   }
 
   return profile;
+}
+
+/**
+ * Increment user's projectsUsed in Firestore
+ */
+export async function incrementProjectsUsed(uid: string): Promise<number> {
+  if (!uid) return 0;
+  try {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    let currentUsed = 0;
+    if (snap.exists()) {
+      currentUsed = snap.data().projectsUsed || 0;
+    }
+    const newUsed = currentUsed + 1;
+    await setDoc(userRef, {
+      projectsUsed: newUsed,
+      lastProjectCreated: new Date().toISOString()
+    }, { merge: true });
+    return newUsed;
+  } catch (err) {
+    console.warn("Could not increment projectsUsed in Firestore:", err);
+    return 1;
+  }
 }
 
 /**

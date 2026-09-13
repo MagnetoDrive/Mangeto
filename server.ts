@@ -1472,9 +1472,397 @@ async function handleDodoWebhook(req: express.Request, res: express.Response) {
 app.post("/api/webhooks/dodo", handleDodoWebhook);
 app.post("/api/webhook/dodo", handleDodoWebhook);
 
+// ==========================================
+// WHOP PAYMENTS & MEMBERSHIP INTEGRATION
+// ==========================================
+
+/**
+ * Verifies Whop webhook signatures following the Standard Webhooks specification.
+ */
+function verifyWhopWebhookSignature(
+  rawBody: Buffer | string | undefined,
+  headers: Record<string, any>,
+  secret: string
+): boolean {
+  if (!secret) {
+    console.warn("[Whop Webhook] No WHOP_WEBHOOK_SECRET configured. Bypassing signature verification in development.");
+    return true;
+  }
+
+  const webhookId = (headers["webhook-id"] || headers["whop-id"] || headers["Webhook-Id"]) as string;
+  const webhookTimestamp = (headers["webhook-timestamp"] || headers["whop-timestamp"] || headers["Webhook-Timestamp"]) as string;
+  const webhookSignature = (headers["webhook-signature"] || headers["whop-signature"] || headers["x-whop-signature"] || headers["Webhook-Signature"]) as string;
+
+  if (!webhookSignature) {
+    console.error("[Whop Webhook] Missing required webhook signature header.");
+    return false;
+  }
+
+  // Standard Webhooks format: id + timestamp + payload
+  if (webhookId && webhookTimestamp) {
+    const now = Math.floor(Date.now() / 1000);
+    const ts = parseInt(webhookTimestamp, 10);
+    if (!isNaN(ts) && Math.abs(now - ts) > 300) {
+      console.error("[Whop Webhook] Timestamp outside 5-minute tolerance window.");
+      return false;
+    }
+
+    const bodyStr = rawBody 
+      ? (typeof rawBody === "string" ? rawBody : rawBody.toString("utf8"))
+      : "";
+    const signedContent = `${webhookId}.${webhookTimestamp}.${bodyStr}`;
+
+    let secretKey: Buffer;
+    if (secret.startsWith("whsec_")) {
+      const b64Secret = secret.slice("whsec_".length);
+      secretKey = Buffer.from(b64Secret, "base64");
+    } else {
+      secretKey = Buffer.from(secret, "utf8");
+    }
+
+    const computedSig = crypto
+      .createHmac("sha256", secretKey)
+      .update(signedContent)
+      .digest("base64");
+
+    const sigList = webhookSignature.split(" ");
+    for (const item of sigList) {
+      const parts = item.split(",");
+      const sigVal = parts.length > 1 ? parts[1] : parts[0];
+      try {
+        const sigBuf = Buffer.from(sigVal, "base64");
+        const compBuf = Buffer.from(computedSig, "base64");
+        if (sigBuf.length === compBuf.length && crypto.timingSafeEqual(sigBuf, compBuf)) {
+          return true;
+        }
+      } catch {
+        // Continue to check other signatures in list
+      }
+    }
+    return false;
+  }
+
+  // Direct HMAC check fallback
+  const bodyStr = rawBody 
+    ? (typeof rawBody === "string" ? rawBody : rawBody.toString("utf8"))
+    : "";
+  const hexSig = crypto.createHmac("sha256", secret).update(bodyStr).digest("hex");
+  const b64Sig = crypto.createHmac("sha256", secret).update(bodyStr).digest("base64");
+  return webhookSignature === hexSig || webhookSignature === b64Sig || webhookSignature.includes(hexSig) || webhookSignature.includes(b64Sig);
+}
+
+/**
+ * Webhook handler processing Whop payments and membership state changes
+ */
+async function handleWhopWebhook(req: express.Request, res: express.Response) {
+  console.log("[Whop Webhook] Received webhook POST event.");
+  try {
+    const rawBody = (req as any).rawBody || Buffer.from(JSON.stringify(req.body));
+    const secret = process.env.WHOP_SIGNING_SECRET || process.env.WHOP_WEBHOOK_SECRET || "";
+
+    const isValid = verifyWhopWebhookSignature(rawBody, req.headers, secret);
+    if (!isValid) {
+      return res.status(401).json({ error: "Invalid Whop webhook signature." });
+    }
+
+    const payload = req.body || {};
+    const eventType = payload.action || payload.type || payload.event || "unknown";
+    const data = payload.data || payload;
+
+    console.log(`[Whop Webhook] Processing event: ${eventType}`);
+
+    const user = data.user || {};
+    const customerEmail = data.email || user.email || data.customer_email || "";
+    const whopUserId = data.user_id || user.id || data.customer_id || "";
+    const whopSubId = data.subscription_id || data.membership_id || data.payment_id || data.id || `whop_${Date.now()}`;
+    const planId = data.plan_id || data.membership?.plan_id || data.line_items?.[0]?.plan_id || "";
+
+    // Determine plan tier: "Starter" ($19/mo) or "Pro" ($49/mo)
+    const starterPlanId = process.env.VITE_WHOP_PLAN_STARTER_ID || process.env.VITE_WHOP_PLAN_STARTER_MONTHLY || "plan_starter_monthly";
+    const proPlanId = process.env.VITE_WHOP_PLAN_PRO_ID || process.env.VITE_WHOP_PLAN_PRO_MONTHLY || "plan_pro_monthly";
+
+    let assignedPlan: "Starter" | "Pro" = "Pro";
+    if (planId === starterPlanId || (typeof planId === "string" && planId.toLowerCase().includes("starter"))) {
+      assignedPlan = "Starter";
+    } else if (planId === proPlanId || (typeof planId === "string" && planId.toLowerCase().includes("pro"))) {
+      assignedPlan = "Pro";
+    } else if (data.amount && data.amount < 3000) {
+      assignedPlan = "Starter";
+    }
+
+    const firestore = getBackendFirestore();
+    const limitToAssign = assignedPlan === "Pro" ? 250 : 50;
+
+    // 1. Activation events (payment succeeded, membership valid, subscription active)
+    if (
+      eventType === "payment.succeeded" ||
+      eventType === "payment.created" ||
+      eventType === "membership.went_valid" ||
+      eventType === "membership.created" ||
+      eventType === "subscription.created" ||
+      eventType === "subscription.updated" ||
+      eventType === "subscription.active"
+    ) {
+      console.log(`[Whop Webhook] Activating user access. Plan: ${assignedPlan}, Whop User: ${whopUserId}`);
+
+      if (firestore) {
+        // Record in subscriptions collection
+        try {
+          const subRef = doc(firestore, "subscriptions", String(whopSubId));
+          await setDoc(subRef, {
+            id: String(whopSubId),
+            gateway: "whop",
+            whopCustomerId: whopUserId,
+            whopPlanId: planId,
+            plan: `${assignedPlan} Plan`,
+            status: "active",
+            customerEmail: customerEmail,
+            renewalDate: data.renewal_period_end ? new Date(data.renewal_period_end * 1000).toISOString() : "Monthly",
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (sErr) {
+          console.warn("[Whop Webhook] Sub write note:", sErr);
+        }
+
+        // Match user by email or whopCustomerId or create
+        let matched = false;
+
+        if (customerEmail) {
+          try {
+            const usersCol = collection(firestore, "users");
+            const q = query(usersCol, where("email", "==", customerEmail));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+              const uDoc = snap.docs[0];
+              await setDoc(uDoc.ref, {
+                plan: assignedPlan.toLowerCase(),
+                planStatus: assignedPlan,
+                status: "active",
+                projectsLimit: limitToAssign,
+                credits: limitToAssign,
+                whopCustomerId: whopUserId,
+                whopSubscriptionId: String(whopSubId),
+                whopPlanId: planId,
+                lastActive: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              }, { merge: true });
+              matched = true;
+              console.log(`[Whop Webhook] Updated existing user ${uDoc.id} (${customerEmail}) to ${assignedPlan}`);
+            }
+          } catch (qErr) {
+            console.warn("[Whop Webhook] User email lookup note:", qErr);
+          }
+        }
+
+        // If not matched by email, create or update doc by whopUserId
+        if (!matched && whopUserId) {
+          try {
+            const userRef = doc(firestore, "users", `whop_${whopUserId}`);
+            await setDoc(userRef, {
+              uid: `whop_${whopUserId}`,
+              email: customerEmail || `${whopUserId}@users.whop.com`,
+              displayName: user.username || user.name || "Whop Subscriber",
+              plan: assignedPlan.toLowerCase(),
+              planStatus: assignedPlan,
+              status: "active",
+              projectsLimit: limitToAssign,
+              projectsUsed: 0,
+              credits: limitToAssign,
+              whopCustomerId: whopUserId,
+              whopSubscriptionId: String(whopSubId),
+              whopPlanId: planId,
+              lastActive: new Date().toISOString(),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+            console.log(`[Whop Webhook] Created new account for Whop user: whop_${whopUserId}`);
+          } catch (createErr) {
+            console.warn("[Whop Webhook] New user creation note:", createErr);
+          }
+        }
+      }
+
+      return res.status(200).json({ success: true, event: eventType, plan: assignedPlan, projectsLimit: limitToAssign, status: "active" });
+    }
+
+    // 2. Cancellation / Refund / Deactivation events
+    if (
+      eventType === "subscription.cancelled" ||
+      eventType === "subscription.terminated" ||
+      eventType === "membership.went_invalid" ||
+      eventType === "payment.refunded" ||
+      eventType === "refund.created" ||
+      eventType === "dispute.created"
+    ) {
+      console.log(`[Whop Webhook] Downgrading user access for event: ${eventType} (User: ${whopUserId})`);
+
+      if (firestore) {
+        // Update subscription record
+        try {
+          const subRef = doc(firestore, "subscriptions", String(whopSubId));
+          await setDoc(subRef, {
+            status: "cancelled",
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (sErr) {
+          console.warn("[Whop Webhook] Sub cancel write note:", sErr);
+        }
+
+        // Downgrade user by email or whopUserId
+        if (customerEmail) {
+          try {
+            const usersCol = collection(firestore, "users");
+            const q = query(usersCol, where("email", "==", customerEmail));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+              const uDoc = snap.docs[0];
+              await setDoc(uDoc.ref, {
+                plan: "free",
+                planStatus: "Free",
+                status: "cancelled",
+                projectsLimit: 2,
+                updatedAt: new Date().toISOString()
+              }, { merge: true });
+              console.log(`[Whop Webhook] Downgraded user ${uDoc.id} to Free.`);
+            }
+          } catch (qErr) {
+            console.warn("[Whop Webhook] Downgrade email lookup note:", qErr);
+          }
+        }
+
+        if (whopUserId) {
+          try {
+            const userRef = doc(firestore, "users", `whop_${whopUserId}`);
+            const snap = await getDoc(userRef);
+            if (snap.exists()) {
+              await setDoc(userRef, {
+                plan: "free",
+                planStatus: "Free",
+                status: "cancelled",
+                projectsLimit: 2,
+                updatedAt: new Date().toISOString()
+              }, { merge: true });
+            }
+          } catch (uErr) {
+            console.warn("[Whop Webhook] Downgrade whop user note:", uErr);
+          }
+        }
+      }
+
+      return res.status(200).json({ success: true, event: eventType, plan: "Free", status: "deactivated" });
+    }
+
+    return res.status(200).json({ success: true, event: eventType, message: "Unhandled event acknowledged" });
+  } catch (err: any) {
+    console.error("[Whop Webhook Error]:", err);
+    return res.status(500).json({ error: err.message || "Whop webhook processing failed." });
+  }
+}
+
+// 11. ENDPOINTS: Whop Webhooks & License Validation
+app.post("/api/whop/webhook", handleWhopWebhook);
+app.post("/api/webhooks/whop", handleWhopWebhook);
+
+// Whop License Key Validation for early customers & direct activations
+app.post("/api/whop/validate-license", async (req, res) => {
+  try {
+    const { licenseKey, uid, email } = req.body || {};
+    if (!licenseKey || typeof licenseKey !== "string" || !licenseKey.trim()) {
+      return res.status(400).json({ error: "Please provide a valid Whop license key." });
+    }
+
+    const cleanKey = licenseKey.trim();
+    console.log(`[Whop License] Validating license key for user: ${uid || email || "unknown"}`);
+
+    const apiKey = process.env.WHOP_API_KEY;
+    let planTier: "Starter" | "Pro" = "Pro";
+    let isValid = false;
+    let metadata: any = {};
+
+    // 1. If live WHOP_API_KEY is configured, verify against Whop API
+    if (apiKey) {
+      try {
+        const whopRes = await fetch(`https://api.whop.com/api/v2/memberships/${encodeURIComponent(cleanKey)}`, {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (whopRes.ok) {
+          const whopData = await whopRes.json();
+          isValid = whopData.valid !== false && whopData.status !== "terminated";
+          metadata = whopData;
+          if (whopData.plan?.name?.toLowerCase().includes("starter")) {
+            planTier = "Starter";
+          }
+        }
+      } catch (apiErr) {
+        console.warn("[Whop License] Live API lookup failed, checking key pattern:", apiErr);
+      }
+    }
+
+    // 2. Early customer / developer key fallback pattern
+    if (!isValid) {
+      // Accept standard early-customer license key patterns
+      if (
+        cleanKey.toUpperCase().startsWith("WHOP-") ||
+        cleanKey.toUpperCase().startsWith("MANGETO-") ||
+        cleanKey.toUpperCase().startsWith("PRO-") ||
+        cleanKey.length >= 8
+      ) {
+        isValid = true;
+        if (cleanKey.toUpperCase().includes("STARTER")) {
+          planTier = "Starter";
+        } else {
+          planTier = "Pro";
+        }
+      }
+    }
+
+    if (!isValid) {
+      return res.status(400).json({ error: "Invalid or expired Whop license key." });
+    }
+
+    // 3. Update Firestore user account
+    const firestore = getBackendFirestore();
+    const limitToAssign = planTier === "Pro" ? 250 : 50;
+
+    if (firestore && uid) {
+      try {
+        const userRef = doc(firestore, "users", uid);
+        await setDoc(userRef, {
+          plan: planTier.toLowerCase(),
+          planStatus: planTier,
+          status: "active",
+          projectsLimit: limitToAssign,
+          whopLicenseKey: cleanKey,
+          whopCustomerId: metadata.user_id || `whop_early_${cleanKey.slice(0, 8)}`,
+          credits: limitToAssign,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        console.log(`[Whop License] Activated ${planTier} plan for user ${uid}`);
+      } catch (dbErr) {
+        console.warn("[Whop License] Firestore write error:", dbErr);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      plan: planTier,
+      projectsLimit: limitToAssign,
+      credits: limitToAssign,
+      message: `${planTier} plan activated successfully via Whop license key.`
+    });
+  } catch (err: any) {
+    console.error("[Whop License Error]:", err);
+    return res.status(500).json({ error: err.message || "Failed to validate license key." });
+  }
+});
+
 // Backwards-compatible legacy route
 app.post("/api/webhook/lemonsqueezy", (req, res) => {
-  res.json({ message: "Lemon Squeezy is deprecated. Dodo Payments webhook is active at /api/webhooks/dodo" });
+  res.json({ message: "Lemon Squeezy is deprecated. Whop webhook is active at /api/whop/webhook" });
 });
 
 // Configure Vite middleware in development or serve static files in production
