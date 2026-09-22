@@ -61,9 +61,9 @@ export default function PricingLandingView({
   const [demoPitches, setDemoPitches] = useState<{ id: number; title: string; hook: string; body: string; cta: string }[] | null>(null);
 
   // Merchant of Record (MOR) Pitches for Dodo Payments
-  const morPitch1 = `Magneto is an AI-powered Video Pitch & Scriptwriting SaaS platform that converts raw product concepts into high-converting video scripts, teleprompter workflows, and marketing collateral using Gemini AI orchestration. Delivered as a cloud-based SaaS subscription with instant digital entitlement, automated license provisioning, strict data privacy compliance, and zero physical fulfillment risk, engineered for Dodo Payments Merchant of Record standards.`;
+  const morPitch1 = `Mangeto is an AI-powered Video Pitch & Scriptwriting SaaS platform that converts raw product concepts into high-converting video scripts, teleprompter workflows, and marketing collateral using Gemini AI orchestration. Delivered as a cloud-based SaaS subscription with instant digital entitlement, automated license provisioning, strict data privacy compliance, and zero physical fulfillment risk, engineered for Dodo Payments Merchant of Record standards.`;
 
-  const morPitch2 = `Magneto Scale & Automation is an automated cloud software subscription providing high-volume AI pitch deck processing, automated script generation, voiceover synchronization, and interactive teleprompter access. Features instant digital credit allocation upon checkout, automated recurring billing via Dodo Payments Merchant of Record, self-service cancellation, and clear 14-day refund conditions with zero manual fulfillment delays.`;
+  const morPitch2 = `Mangeto Scale & Automation is an automated cloud software subscription providing high-volume AI pitch deck processing, automated script generation, voiceover synchronization, and interactive teleprompter access. Features instant digital credit allocation upon checkout, automated recurring billing via Dodo Payments Merchant of Record, self-service cancellation, and clear 14-day refund conditions with zero manual fulfillment delays.`;
 
   const handleCopyMorPitch = (text: string, pitchNum: 1 | 2) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -172,7 +172,7 @@ export default function PricingLandingView({
     },
     {
       q: "How does self-service software delivery work?",
-      a: "Magneto is a 100% automated self-service SaaS platform. Immediately upon checkout, your monthly AI generation credits are unlocked in your account. All script generation, teleprompter syncing, and scene overlays execute automatically in your browser with zero manual turnaround or waiting time."
+      a: "Mangeto is a 100% automated self-service SaaS platform. Immediately upon checkout, your monthly AI generation credits are unlocked in your account. All script generation, teleprompter syncing, and scene overlays execute automatically in your browser with zero manual turnaround or waiting time."
     },
     {
       q: "What is your refund and cancellation policy?",
@@ -190,7 +190,7 @@ export default function PricingLandingView({
               M
             </div>
             <div>
-              <span className="font-extrabold text-sm tracking-tight text-slate-100 block">Magneto</span>
+              <span className="font-extrabold text-sm tracking-tight text-slate-100 block">Mangeto</span>
               <span className="text-[10px] text-indigo-400 font-mono uppercase font-bold">Pricing & MOR Edition</span>
             </div>
           </div>
@@ -542,7 +542,7 @@ export default function PricingLandingView({
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span><strong>Instant HD Export</strong> & 4K Scene Visuals</span>
+                  <span><strong>Instant HD Export</strong> & Multi-Aspect Scene Visuals</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-indigo-400 shrink-0" />

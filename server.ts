@@ -21,7 +21,7 @@ app.use(express.json({
 
 // API Health Check
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", service: "Magneto" });
+  res.json({ status: "ok", service: "Mangeto" });
 });
 
 // Lazy-loaded Gemini AI client

@@ -13,6 +13,7 @@ interface SavedProjectsProps {
   onHireDeveloper: () => void;
   onOpenPricing?: () => void;
   onOpenBilling?: () => void;
+  onOpenLanding?: () => void;
   currentUser?: {
     uid: string;
     email: string | null;
@@ -34,6 +35,7 @@ export default function SavedProjects({
   onHireDeveloper,
   onOpenPricing,
   onOpenBilling,
+  onOpenLanding,
   currentUser,
   onOpenAuth,
   onSignOut,
@@ -46,15 +48,20 @@ export default function SavedProjects({
   return (
     <div className="bg-slate-900 border-b border-slate-800 p-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 overflow-x-auto py-1">
-        <div className="flex items-center gap-3 shrink-0">
-          <img src="/logo.svg" alt="Magneto" className="h-8 w-auto shrink-0" id="magneto_navbar_logo" />
+        <button 
+          onClick={onOpenLanding}
+          className="flex items-center gap-3 shrink-0 text-left cursor-pointer hover:opacity-90 transition group"
+          id="btn_mangeto_navbar_home"
+          title="Return to Mangeto Home"
+        >
+          <img src="/logo.svg" alt="Mangeto" className="h-8 w-auto shrink-0 group-hover:scale-105 transition" id="mangeto_navbar_logo" />
           <div>
             <h2 className="text-base font-extrabold text-slate-100 flex items-center gap-2">
-              Magneto
+              Mangeto
             </h2>
             <p className="text-xs text-slate-400">Pull attention. Keep it.</p>
           </div>
-        </div>
+        </button>
 
         <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
           {/* User Auth Profile / Login Button */}
@@ -119,6 +126,17 @@ export default function SavedProjects({
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Sign In / Register</span>
+            </button>
+          )}
+
+          {onOpenLanding && (
+            <button
+              onClick={onOpenLanding}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+              id="btn_header_landing_home"
+              title="View Mangeto Landing Page"
+            >
+              <span>Overview</span>
             </button>
           )}
 

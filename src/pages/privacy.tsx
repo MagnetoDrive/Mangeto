@@ -76,10 +76,10 @@ export default function PrivacyPage({ onBack }: PrivacyProps) {
               Merchant of Record (MoR)
             </h2>
             <p>
-              All online transactions, payments, global VAT, sales tax management, and subscription cancellations on Magneto are handled and processed securely by <strong>Dodo Payments</strong> as our exclusive Merchant of Record.
+              All online transactions, payments, global VAT, sales tax management, and subscription cancellations on Mangeto are handled and processed securely by our official Merchant of Record partner.
             </p>
             <p>
-              Dodo Payments is the legal seller of Magneto services and processes billing parameters under its own privacy frameworks. No full payment card data is processed, seen, or stored on our servers.
+              The Merchant of Record is the legal seller of Mangeto services and processes billing parameters under its own privacy frameworks. No full payment card data is processed, seen, or stored on our servers.
             </p>
           </section>
 
@@ -143,7 +143,7 @@ export default function PrivacyPage({ onBack }: PrivacyProps) {
         <div className="pt-8 border-t border-slate-850 flex items-center gap-3">
           <Scale className="w-5 h-5 text-slate-500 shrink-0" />
           <p className="text-[11px] text-slate-550 leading-normal">
-            Your use of Magneto indicates consent to our continuous data storage practices. If you disagree with any segment, please terminate use of the app and delete your cached projects in Saved Projects.
+            Your use of Mangeto indicates consent to our continuous data storage practices. If you disagree with any segment, please terminate use of the app and delete your cached projects in Saved Projects.
           </p>
         </div>
       </div>

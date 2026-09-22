@@ -12,7 +12,7 @@ export default function CompanionChat({ onQuickApplyHooks, activeProjectName }: 
     {
       id: "welcome",
       sender: "ai",
-      text: "Hey! I'm Magneto Copilot, your magnetic marketing and storyboard strategist. Describe your product concept, target audience, and key outcome so we can formulate some high-impact hooks first!",
+      text: "Hey! I'm Mangeto Copilot, your magnetic marketing and storyboard strategist. Describe your product concept, target audience, and key outcome so we can formulate some high-impact hooks first!",
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
@@ -117,7 +117,7 @@ export default function CompanionChat({ onQuickApplyHooks, activeProjectName }: 
           </div>
           <div>
             <h4 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-              Magneto Copilot
+              Mangeto Copilot
             </h4>
             <p className="text-[10px] text-slate-400 font-mono">MAGNETIC MARKETING STRATEGIST</p>
           </div>
@@ -211,7 +211,7 @@ export default function CompanionChat({ onQuickApplyHooks, activeProjectName }: 
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder={isSending ? "Copilot is drafting..." : "Ask Magneto to formulate a hook list or scripts..."}
+          placeholder={isSending ? "Copilot is drafting..." : "Ask Mangeto to formulate a hook list or scripts..."}
           disabled={isSending}
           className="flex-grow bg-slate-950 text-slate-200 px-4 py-2.5 text-xs rounded-xl border border-slate-850 focus:border-slate-700 focus:outline-none font-medium"
         />

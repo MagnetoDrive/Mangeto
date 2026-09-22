@@ -51,7 +51,7 @@ export default function RefundPage({ onBack, onNavigateTo }: RefundPageProps) {
             <span>Summary of Our Customer Protection Guarantee</span>
           </div>
           <p className="text-slate-300">
-            Magneto is a 100% automated software-as-a-service (SaaS) application providing instant digital entitlement upon purchase. You have total control over your software subscription:
+            Mangeto is a 100% automated software-as-a-service (SaaS) application providing instant digital entitlement upon purchase. You have total control over your software subscription:
           </p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-slate-200 font-medium">
             <li className="flex items-start gap-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
@@ -82,7 +82,7 @@ export default function RefundPage({ onBack, onNavigateTo }: RefundPageProps) {
               14-Day Refund Eligibility
             </h2>
             <p>
-              We want you to evaluate Magneto with complete confidence. We offer a <strong>14-day money-back guarantee</strong> for all initial software subscription purchases under the following straightforward condition:
+              We want you to evaluate Mangeto with complete confidence. We offer a <strong>14-day money-back guarantee</strong> for all initial software subscription purchases under the following straightforward condition:
             </p>
             <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl space-y-2 text-xs">
               <p className="font-semibold text-slate-200">
@@ -126,7 +126,7 @@ export default function RefundPage({ onBack, onNavigateTo }: RefundPageProps) {
               Instant Digital Delivery (No Physical Goods)
             </h2>
             <p>
-              Magneto is 100% automated software. Upon successful payment verification via our Merchant of Record (Dodo Payments), your digital software license and monthly generation credits are provisioned to your account immediately.
+              Mangeto is 100% automated software. Upon successful payment verification via our Merchant of Record, your digital software license and monthly generation credits are provisioned to your account immediately.
             </p>
             <p className="text-xs text-slate-400">
               Because all fulfillment is electronic and instantaneous, there are no shipping charges, physical handling delays, or manual intervention needed to start using the software.
@@ -148,7 +148,7 @@ export default function RefundPage({ onBack, onNavigateTo }: RefundPageProps) {
                 <span>Support Email:</span>
               </div>
               <a 
-                href="mailto:tsepomotsatse@gmail.com?subject=Magneto%20Refund%20Request" 
+                href="mailto:tsepomotsatse@gmail.com?subject=Mangeto%20Refund%20Request" 
                 className="text-slate-100 hover:text-indigo-400 font-mono text-sm underline font-bold transition block"
               >
                 tsepomotsatse@gmail.com
@@ -167,7 +167,7 @@ export default function RefundPage({ onBack, onNavigateTo }: RefundPageProps) {
             className="text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer flex items-center gap-1.5"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Magneto Workspace
+            Back to Mangeto Workspace
           </button>
           <div className="flex items-center gap-4">
             {onNavigateTo && (

@@ -90,7 +90,7 @@ export default function LaunchDeployView({ project, onUpdateProject }: LaunchDep
   // Initialize overrides and titles from active campaign
   useEffect(() => {
     if (project) {
-      setRepoName(`magneto-${project.name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/^-+|-+$/g, "")}`);
+      setRepoName(`mangeto-${project.name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/^-+|-+$/g, "")}`);
       setProjectName(project.name);
       
       const lp = project.marketing?.landingPageHero;
@@ -181,7 +181,7 @@ export default function LaunchDeployView({ project, onUpdateProject }: LaunchDep
 
     try {
       // Step 1: Initialize launch pipeline
-      addLog("🚀 Initializing Magneto Launch Engine...");
+      addLog("🚀 Initializing Mangeto Launch Engine...");
       await delay(1000);
 
       // Deploy to GitHub if token provided
@@ -542,7 +542,7 @@ export default function LaunchDeployView({ project, onUpdateProject }: LaunchDep
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                     <span className="ml-4 bg-white border border-stone-200 rounded px-2 py-0.5 w-64 inline-block overflow-hidden whitespace-nowrap">
-                      magneto-draft.vercel.app
+                      mangeto-draft.vercel.app
                     </span>
                   </div>
                   <iframe 

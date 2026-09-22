@@ -108,7 +108,7 @@ export async function syncUserProfile(user: User, customDisplayName?: string): P
     console.warn("Could not read user doc prior to sync:", err);
   }
 
-  const displayName = customDisplayName || user.displayName || user.email?.split("@")[0] || "Magneto Creator";
+  const displayName = customDisplayName || user.displayName || user.email?.split("@")[0] || "Mangeto Creator";
 
   const profile: UserProfile = {
     uid: user.uid,

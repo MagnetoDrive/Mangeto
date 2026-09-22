@@ -428,15 +428,15 @@ export default function AdminControl({ onBack }: AdminControlProps) {
     if (table === 'users') {
       headers = ["User ID", "Email", "Created At", "Last Active", "Plan Status"];
       rows = users.map(u => [u.uid, u.email || "", u.createdAt, u.lastActive, u.planStatus]);
-      filename = "magneto_users_export.csv";
+      filename = "mangeto_users_export.csv";
     } else if (table === 'subscriptions') {
       headers = ["Lemon Squeezy ID", "Plan", "Status", "Renewal Date"];
       rows = subscriptions.map(s => [s.id, s.plan, s.status, s.renewalDate]);
-      filename = "magneto_subscriptions_export.csv";
+      filename = "mangeto_subscriptions_export.csv";
     } else if (table === 'feedback') {
       headers = ["Feedback ID", "Timestamp", "User", "Message", "Type"];
       rows = feedback.map(f => [f.id, f.timestamp, f.user, f.message.replace(/"/g, '""'), f.type]);
-      filename = "magneto_feedback_export.csv";
+      filename = "mangeto_feedback_export.csv";
     }
 
     const csvContent = [
@@ -490,7 +490,7 @@ export default function AdminControl({ onBack }: AdminControlProps) {
 
           <div className="text-center space-y-1.5 mb-8">
             <h1 className="text-xl font-black text-slate-100 tracking-tight flex items-center justify-center gap-2">
-              Magneto Admin Control
+              Mangeto Admin Control
             </h1>
             <p className="text-xs text-slate-400">Restricted analytical viewport access</p>
           </div>
@@ -837,7 +837,7 @@ export default function AdminControl({ onBack }: AdminControlProps) {
                           <td className="py-3 px-4 text-slate-200 font-medium leading-relaxed whitespace-pre-wrap">{f.message}</td>
                           <td className="py-3 px-4 text-right">
                             <a
-                              href={`mailto:${f.user.includes('@') ? f.user : 'tsepomothibeditimothymotsatse@gmail.com'}?subject=Re: Magneto Feedback - ${f.type.toUpperCase()}&body=Hi ${f.user.includes('@') ? f.user.split('@')[0] : 'there'},%0D%0A%0D%0AThank you for sharing your feedback with Magneto!%0D%0A%0D%0ARegards,%0D%0ATsepo Motsatse`}
+                              href={`mailto:${f.user.includes('@') ? f.user : 'tsepomothibeditimothymotsatse@gmail.com'}?subject=Re: Mangeto Feedback - ${f.type.toUpperCase()}&body=Hi ${f.user.includes('@') ? f.user.split('@')[0] : 'there'},%0D%0A%0D%0AThank you for sharing your feedback with Mangeto!%0D%0A%0D%0ARegards,%0D%0ATsepo Motsatse`}
                               className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-755 text-indigo-400 hover:text-indigo-300 rounded text-[11px] font-semibold transition border border-slate-750"
                             >
                               <Mail className="w-3 h-3" />

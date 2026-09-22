@@ -92,7 +92,7 @@ export default function DeckSummarizerView({
 
   const loadExampleDeck = () => {
     setDeckText(
-      "Slide 1: Intro\nMagneto - Video script and marketing copywrite robot.\nProblem: founders write boring deck copy and lose demos. Video pitches on LinkedIn/TikTok are too long or have zero focus/call to action.\n\nSlide 2: Value prop\nGenerate 15 hooks in minutes.\nFull teleprompter script under 60 seconds matching grade-6 simplified speech.\n\nSlide 3: Proof\nFounders using video outreach raise 40% faster. Direct response CTAs double the click rate.\n\nSlide 4: Solution\nHooks are ranked by scroll stop power. Teleprompter features adjustable scroll controls.\n\nSlide 5: pricing/cta\nBuild your first custom campaign for free today."
+      "Slide 1: Intro\nMangeto - Video script and marketing copywrite robot.\nProblem: founders write boring deck copy and lose demos. Video pitches on LinkedIn/TikTok are too long or have zero focus/call to action.\n\nSlide 2: Value prop\nGenerate 15 hooks in minutes.\nFull teleprompter script under 60 seconds matching grade-6 simplified speech.\n\nSlide 3: Proof\nFounders using video outreach raise 40% faster. Direct response CTAs double the click rate.\n\nSlide 4: Solution\nHooks are ranked by scroll stop power. Teleprompter features adjustable scroll controls.\n\nSlide 5: pricing/cta\nBuild your first custom campaign for free today."
     );
     setTargetAudience("Venture capitalists, business angels, startup founders");
     setTargetOutcome("Accelerate presentation raise rates and multiply LinkedIn lead velocity");
@@ -115,7 +115,7 @@ export default function DeckSummarizerView({
               Deck-To-Video Synthesizer
             </h3>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Have an existing deck (PDF / PPT / Notes)? Paste the layout copy or bullets below. Magneto will extract the central value proposition, synthesize key proofs, map slides to video storyboard scenes, and align high-converting video hooks automatically.
+              Have an existing deck (PDF / PPT / Notes)? Paste the layout copy or bullets below. Mangeto will extract the central value proposition, synthesize key proofs, map slides to video storyboard scenes, and align high-converting video hooks automatically.
             </p>
           </div>
         </div>

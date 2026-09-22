@@ -127,7 +127,7 @@ export default function HireDeveloperModal({ isOpen, onClose }: HireDeveloperMod
             Tsepo Motsatse
           </h2>
           <p className="text-xs text-slate-400 font-medium">
-            Seasoned Vibe Developer & Founder • Architect of Magneto, ShiftSense AI & DeepResearch AI
+            Seasoned Vibe Developer & Founder • Architect of Mangeto, ShiftSense AI & DeepResearch AI
           </p>
         </div>
 

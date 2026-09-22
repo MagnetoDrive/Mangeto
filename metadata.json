@@ -1,6 +1,6 @@
 {
-  "name": "Magneto",
-  "description": "Magneto turns sales decks into viral video marketing kits with AI storyboards, hook generators, and an interactive teleprompter with AI voiceover.",
+  "name": "Mangeto",
+  "description": "Mangeto turns sales decks and ideas into scroll-stopping short-form video kits with AI hooks, scripts, storyboards, teleprompter scripts, and multi-channel marketing content.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

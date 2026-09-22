@@ -19,7 +19,7 @@ import { db } from "../lib/firebase";
 
 interface BillingPageProps {
   onBack: () => void;
-  onNavigateTo: (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing') => void;
+  onNavigateTo: (page: 'landing' | 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing') => void;
   currentUser?: {
     uid: string;
     email: string | null;
@@ -431,8 +431,8 @@ export default function BillingPage({ onBack, onNavigateTo, currentUser }: Billi
               <h4 className="text-base font-bold text-white">Pro ($49/mo)</h4>
               <ul className="text-xs text-slate-400 space-y-2">
                 <li>&bull; 250 projects per month</li>
-                <li>&bull; Team seats & shared workspaces</li>
-                <li>&bull; 9:16 vertical, 1:1, 16:9 4K</li>
+                <li>&bull; Team seats & shared workspaces (Coming soon)</li>
+                <li>&bull; 9:16 vertical, 1:1, 16:9 widescreen formats</li>
                 <li>&bull; Automated deck-to-video parser</li>
                 <li>&bull; Full 5-channel marketing kit</li>
                 <li>&bull; Priority 24/7 fast processing</li>

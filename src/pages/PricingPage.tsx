@@ -21,7 +21,7 @@ import { db, initializeAnonymousSession } from "../lib/firebase";
 
 interface PricingPageProps {
   onBackToApp?: () => void;
-  onNavigateTo?: (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing') => void;
+  onNavigateTo?: (page: 'landing' | 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing') => void;
   currentUser?: {
     uid: string;
     email: string | null;
@@ -192,8 +192,8 @@ export default function PricingPage({
             <div className="space-y-6">
               <div className="space-y-1">
                 <span className="text-xs font-mono uppercase font-bold text-slate-400">Curious Creators & Founders</span>
-                <h2 className="text-2xl font-black text-white">Free</h2>
-                <p className="text-xs text-slate-400">Test the viral pitch generator with no credit card required.</p>
+                <h2 className="text-2xl font-black text-white">Free Trial</h2>
+                <p className="text-xs text-slate-400">Test the video pitch & hook generator with no credit card required.</p>
               </div>
 
               <div className="flex items-baseline gap-1">
@@ -212,6 +212,10 @@ export default function PricingPage({
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>No credit card required</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>15 ranked hooks per request</span>
                   </li>
                   <li className="flex items-center gap-2.5">
@@ -220,7 +224,7 @@ export default function PricingPage({
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>4-scene video storyboard with b-roll</span>
+                    <span>4-scene video storyboard with visual direction</span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -249,7 +253,7 @@ export default function PricingPage({
                 ) : (
                   <>
                     <Gift className="w-4 h-4 text-emerald-400" />
-                    <span>Start free</span>
+                    <span>Start free trial</span>
                   </>
                 )}
               </button>
@@ -266,7 +270,7 @@ export default function PricingPage({
               <div className="space-y-1">
                 <span className="text-xs font-mono uppercase font-bold text-indigo-400">Solo Founders & Creators</span>
                 <h2 className="text-2xl font-black text-white">Starter</h2>
-                <p className="text-xs text-slate-400">Consistent video publishing with reliable viral copywriting frameworks.</p>
+                <p className="text-xs text-slate-400">Consistent video publishing with reliable, high-converting copywriting frameworks.</p>
               </div>
 
               <div className="flex items-baseline gap-1">
@@ -287,7 +291,7 @@ export default function PricingPage({
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Basic viral pitch templates</span>
+                    <span>Proven pitch & hook copywriting frameworks</span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-indigo-400 shrink-0" />
@@ -344,7 +348,7 @@ export default function PricingPage({
               <div className="space-y-1">
                 <span className="text-xs font-mono uppercase font-bold text-indigo-400">Small Teams & Agencies</span>
                 <h2 className="text-2xl font-black text-white">Pro</h2>
-                <p className="text-xs text-slate-400">High-volume production, collaborative team seats, extra aspect ratios, and priority support.</p>
+                <p className="text-xs text-slate-400">High-volume production, extra aspect ratios, and priority processing.</p>
               </div>
 
               <div className="flex items-baseline gap-1">
@@ -365,11 +369,11 @@ export default function PricingPage({
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span><strong>Team seats and shared workspaces</strong></span>
+                    <span>Team seats & shared workspaces <span className="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-800/60 px-1.5 py-0.2 rounded font-mono font-medium ml-1">Coming soon</span></span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span><strong>Extra formats: 9:16 vertical, 1:1 square, 16:9 widescreen 4K</strong></span>
+                    <span><strong>Aspect ratio formats: 9:16 vertical, 1:1 square, 16:9 widescreen</strong></span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-indigo-400 shrink-0" />
@@ -381,7 +385,7 @@ export default function PricingPage({
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span><strong>Priority 24/7 support with fast processing</strong></span>
+                    <span><strong>Priority support with fast processing</strong></span>
                   </li>
                 </ul>
               </div>

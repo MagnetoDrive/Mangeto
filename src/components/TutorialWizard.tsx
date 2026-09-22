@@ -115,7 +115,7 @@ export default function TutorialWizard({
               Tutorial {currentStep > 0 ? `${currentStep}/${totalSteps - 1}` : "Intro"}
             </span>
             <h4 className="text-sm font-bold text-slate-100 font-sans">
-              {currentStep === 0 && "Welcome to Magneto!"}
+              {currentStep === 0 && "Welcome to Mangeto!"}
               {currentStep === 1 && "Step 1: Set Target Parameters"}
               {currentStep === 2 && "Step 2: Formulate 15 Hooks"}
               {currentStep === 3 && "Step 3: Edit Teleprompter Script"}
@@ -141,7 +141,7 @@ export default function TutorialWizard({
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-black tracking-tight text-slate-100">
-                  Magneto turns your idea into a video in under 60 seconds
+                  Mangeto turns your idea into a video in under 60 seconds
                 </h3>
                 <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
                   Never write a boring pitch script again. In 4 clear steps, we generate scroll-stopping presentation hooks, a full teleprompter script, visual B-roll storyboard sketches, and cross-channel distribution posts.

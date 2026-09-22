@@ -28,6 +28,7 @@ import HireDeveloperModal from "./components/HireDeveloperModal";
 import FeedbackWidget from "./components/FeedbackWidget";
 import PricingLandingView from "./components/PricingLandingView";
 import AuthModal from "./components/AuthModal";
+import LandingPage from "./components/LandingPage";
 
 const ENABLE_ADMIN = true;
 
@@ -47,7 +48,7 @@ export default function App() {
   const [userId, setUserId] = useState<string | null>(null);
 
   // Active page routing and modal states
-  const [activePage, setActivePage] = useState<'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing'>(() => {
+  const [activePage, setActivePage] = useState<'landing' | 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing'>(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname;
       if (path === "/admin") return "admin";
@@ -56,8 +57,10 @@ export default function App() {
       if (path === "/pricing") return "pricing";
       if (path === "/refund") return "refund";
       if (path === "/billing") return "billing";
+      if (path === "/app" || path === "/studio") return "main";
+      if (path === "/overview" || path === "/landing") return "landing";
     }
-    return "main";
+    return "landing";
   });
   const [isHireOpen, setIsHireOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -68,10 +71,10 @@ export default function App() {
     isAnonymous: boolean;
   } | null>(null);
 
-  const navigateTo = (page: 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing') => {
+  const navigateTo = (page: 'landing' | 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing') => {
     setActivePage(page);
     if (typeof window !== 'undefined') {
-      const newPath = page === 'main' ? '/' : `/${page}`;
+      const newPath = page === 'landing' ? '/' : page === 'main' ? '/app' : `/${page}`;
       window.history.pushState({}, "", newPath);
     }
   };
@@ -85,7 +88,8 @@ export default function App() {
       else if (path === '/pricing') setActivePage('pricing');
       else if (path === '/refund') setActivePage('refund');
       else if (path === '/billing') setActivePage('billing');
-      else setActivePage('main');
+      else if (path === '/app' || path === '/studio') setActivePage('main');
+      else setActivePage('landing');
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -638,19 +642,19 @@ export default function App() {
           { id: "sc_4", timestamp: "45s - 60s", visualPrompt: `Call to action interface with button`, onScreenText: "GET STARTED NOW", avatarDirection: "Nods warmly guiding viewer to link.", audioDescription: "Upbeat crescendo transition.", imageUrl: `https://picsum.photos/seed/fb_sc4_${Date.now()}/640/360` }
         ];
         const fallbackMarketing = {
-          linkedin: `🚀 Struggling with ${concept || "your workflow"}?\n\nHere is how ${audience || "top creators"} are achieving ${outcome || "scale"}:\n\n1. Eliminating friction\n2. Automating execution\n3. Focusing on high-leverage outputs\n\nTry Magneto today!`,
+          linkedin: `🚀 Struggling with ${concept || "your workflow"}?\n\nHere is how ${audience || "top creators"} are achieving ${outcome || "scale"}:\n\n1. Eliminating friction\n2. Automating execution\n3. Focusing on high-leverage outputs\n\nTry Mangeto today!`,
           twitterThread: [
             `1/ Why ${concept || "manual processes"} slow you down (and how to fix it): 🧵`,
             `2/ Most ${audience || "teams"} focus on manual tasks. But automated workflows deliver ${outcome || "speed"}.`,
-            `3/ Ready to level up? Check out Magneto!`
+            `3/ Ready to level up? Check out Mangeto!`
           ],
-          coldEmail: `Subject: Quick question about ${concept || "your setup"}\n\nHi {{FirstName}},\n\nI noticed you are leading operations at {{Company}}. We built a solution that helps you ${outcome || "scale"}.\n\nOpen to a 2-minute look?\n\nBest,\nMagneto Team`,
+          coldEmail: `Subject: Quick question about ${concept || "your setup"}\n\nHi {{FirstName}},\n\nI noticed you are leading operations at {{Company}}. We built a solution that helps you ${outcome || "scale"}.\n\nOpen to a 2-minute look?\n\nBest,\nMangeto Team`,
           landingPageHero: {
             heading: `Transform ${concept || "Your Product"} into High-Converting Output`,
             subheading: `Help ${audience || "your users"} ${outcome || "scale results"} in record time.`,
             cta: "Get Started Free"
           },
-          youtubeDescription: `Discover how ${concept || "Magneto"} empowers ${audience || "creators"} to ${outcome || "scale"}. Watch now!`
+          youtubeDescription: `Discover how ${concept || "Mangeto"} empowers ${audience || "creators"} to ${outcome || "scale"}. Watch now!`
         };
         setScript(fallbackScript);
         setScenes(fallbackScenes);
@@ -735,6 +739,18 @@ export default function App() {
     saveProjectsToStore(updatedList, updatedProject);
   };
 
+  if (activePage === 'landing') {
+    return (
+      <LandingPage
+        onStartFree={() => navigateTo('main')}
+        onOpenPricing={() => navigateTo('pricing')}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onNavigateTo={navigateTo}
+        currentUser={currentUser}
+      />
+    );
+  }
+
   if (activePage === 'admin') {
     return (
       <Suspense fallback={
@@ -789,6 +805,7 @@ export default function App() {
         onHireDeveloper={() => setIsHireOpen(true)}
         onOpenPricing={() => navigateTo('pricing')}
         onOpenBilling={() => navigateTo('billing')}
+        onOpenLanding={() => navigateTo('landing')}
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
         onSignOut={async () => {

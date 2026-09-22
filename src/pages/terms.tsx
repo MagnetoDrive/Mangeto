@@ -43,7 +43,7 @@ export default function TermsPage({ onBack }: TermsProps) {
           <div className="space-y-1.5 text-xs text-indigo-300">
             <span className="font-extrabold block uppercase tracking-wider text-[10px] font-mono">Software Subscription Service</span>
             <p className="leading-relaxed">
-              Magneto is a 100% self-service, cloud-based software subscription service (SaaS) providing automated pitch deck analysis, video script synthesis, and browser teleprompter execution. By accessing our software platform, you agree to the terms herein. All features are delivered via instant digital entitlement upon payment.
+              Mangeto is a 100% self-service, cloud-based software subscription service (SaaS) providing automated pitch deck analysis, video script synthesis, and browser teleprompter execution. By accessing our software platform, you agree to the terms herein. All features are delivered via instant digital entitlement upon payment.
             </p>
           </div>
         </div>
@@ -57,7 +57,7 @@ export default function TermsPage({ onBack }: TermsProps) {
               Automated AI Software Platform
             </h2>
             <p>
-              Magneto is an automated software application that leverages artificial intelligence models to formulate video hooks, scripts, storyboards, and distribution items from pitch deck inputs.
+              Mangeto is an automated software application that leverages artificial intelligence models to formulate video hooks, scripts, storyboards, and distribution items from pitch deck inputs.
             </p>
             <p className="font-semibold text-slate-200">
               The software application and algorithms are provided on an "As-Is" and "As-Available" subscription basis.
@@ -74,7 +74,7 @@ export default function TermsPage({ onBack }: TermsProps) {
               Software Subscriptions & Instant Digital Entitlement
             </h2>
             <p>
-              Magneto subscriptions provide monthly software generation credits and interactive teleprompter access. Subscriptions renew automatically on a recurring monthly or annual basis until canceled.
+              Mangeto subscriptions provide monthly software generation credits and interactive teleprompter access. Subscriptions renew automatically on a recurring monthly or annual basis until canceled.
             </p>
             <p>
               All purchases, billing cycles, sales tax, EU VAT, and payment processing are handled securely by our official payment processor: <strong>Whop</strong>.
@@ -121,7 +121,7 @@ export default function TermsPage({ onBack }: TermsProps) {
               Intellectual Property Rights
             </h2>
             <p>
-              <strong>You own your outputs.</strong> Any hooks, scripts, storyboard arrangements, or distribution copy generated using our platform belong fully to you. Magneto and its developers retain no ownership, licensing, or commercial distribution rights to your produced concepts or campaigns.
+              <strong>You own your outputs.</strong> Any hooks, scripts, storyboard arrangements, or distribution copy generated using our platform belong fully to you. Mangeto and its developers retain no ownership, licensing, or commercial distribution rights to your produced concepts or campaigns.
             </p>
           </section>
 

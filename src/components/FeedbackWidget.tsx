@@ -24,7 +24,7 @@ export default function FeedbackWidget({ userId }: FeedbackWidgetProps) {
 
     try {
       await addDoc(collection(db, "feedback"), {
-        user: userId || "anonymous_magneto_user",
+        user: userId || "anonymous_mangeto_user",
         message: message.trim(),
         type,
         timestamp: new Date().toISOString(), // Standard date string as per schema
@@ -86,7 +86,7 @@ export default function FeedbackWidget({ userId }: FeedbackWidgetProps) {
             <div className="py-6 flex flex-col items-center justify-center text-center space-y-2">
               <CheckCircle className="w-10 h-10 text-emerald-400 animate-bounce" />
               <p className="text-xs font-bold text-slate-100">Feedback Transmitted!</p>
-              <p className="text-[11px] text-slate-400">Thank you for helping us tune Magneto.</p>
+              <p className="text-[11px] text-slate-400">Thank you for helping us tune Mangeto.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3.5">
