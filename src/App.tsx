@@ -15,6 +15,9 @@ import { subscribeToAuth, signOutUser, syncUserProfile, incrementProjectsUsed } 
 import { fetchUserProjects, saveProjectToFirestore, deleteProjectFromFirestore } from "./lib/db";
 import { safeStorage } from "./lib/storage";
 import { setDoc, doc } from "firebase/firestore";
+import { createStoryboardSvg, isBrokenImageUrl } from "./lib/storyboardSvg";
+import ErrorBoundary from "./components/ErrorBoundary";
+import DiagnosticTestDashboard from "./components/DiagnosticTestDashboard";
 
 // New feature additions
 const AdminControl = lazy(() => import("./components/admin/AdminControl"));
@@ -59,6 +62,11 @@ export default function App() {
       if (path === "/billing") return "billing";
       if (path === "/app" || path === "/studio") return "main";
       if (path === "/overview" || path === "/landing") return "landing";
+
+      const saved = safeStorage.getItem("magneto_active_page");
+      if (saved && ['main', 'admin', 'privacy', 'terms', 'pricing', 'refund', 'billing'].includes(saved)) {
+        return saved as any;
+      }
     }
     return "landing";
   });
@@ -72,24 +80,41 @@ export default function App() {
   } | null>(null);
 
   const navigateTo = (page: 'landing' | 'main' | 'admin' | 'privacy' | 'terms' | 'pricing' | 'refund' | 'billing') => {
+    safeStorage.setItem("magneto_active_page", page);
     setActivePage(page);
     if (typeof window !== 'undefined') {
-      const newPath = page === 'landing' ? '/' : page === 'main' ? '/app' : `/${page}`;
-      window.history.pushState({}, "", newPath);
+      try {
+        const newPath = page === 'landing' ? '/' : page === 'main' ? '/app' : `/${page}`;
+        if (window.location.pathname !== newPath) {
+          window.history.pushState({ page }, "", newPath);
+        }
+      } catch (err) {
+        console.warn("History pushState non-fatal notice:", err);
+      }
     }
   };
 
   useEffect(() => {
-    const handlePopState = () => {
+    const handlePopState = (e: PopStateEvent) => {
       const path = window.location.pathname;
-      if (path === '/admin') setActivePage('admin');
-      else if (path === '/privacy') setActivePage('privacy');
-      else if (path === '/terms') setActivePage('terms');
-      else if (path === '/pricing') setActivePage('pricing');
-      else if (path === '/refund') setActivePage('refund');
-      else if (path === '/billing') setActivePage('billing');
-      else if (path === '/app' || path === '/studio') setActivePage('main');
-      else setActivePage('landing');
+      if (path === '/admin') { setActivePage('admin'); safeStorage.setItem("magneto_active_page", 'admin'); }
+      else if (path === '/privacy') { setActivePage('privacy'); safeStorage.setItem("magneto_active_page", 'privacy'); }
+      else if (path === '/terms') { setActivePage('terms'); safeStorage.setItem("magneto_active_page", 'terms'); }
+      else if (path === '/pricing') { setActivePage('pricing'); safeStorage.setItem("magneto_active_page", 'pricing'); }
+      else if (path === '/refund') { setActivePage('refund'); safeStorage.setItem("magneto_active_page", 'refund'); }
+      else if (path === '/billing') { setActivePage('billing'); safeStorage.setItem("magneto_active_page", 'billing'); }
+      else if (path === '/app' || path === '/studio') { setActivePage('main'); safeStorage.setItem("magneto_active_page", 'main'); }
+      else if (e.state && e.state.page) {
+        setActivePage(e.state.page);
+        safeStorage.setItem("magneto_active_page", e.state.page);
+      } else {
+        const saved = safeStorage.getItem("magneto_active_page");
+        if (saved === 'main') {
+          setActivePage('main');
+        } else {
+          setActivePage('landing');
+        }
+      }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -116,8 +141,9 @@ export default function App() {
   const [isSubscribePromptOpen, setIsSubscribePromptOpen] = useState(false);
   const [pendingHook, setPendingHook] = useState<Hook | null>(null);
 
-  // Tutorial wizard and live streaming feed parameters
+  // Tutorial wizard, diagnostics HUD, and live streaming feed parameters
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [progressStage, setProgressStage] = useState("");
   const [progressPercent, setProgressPercent] = useState(0);
@@ -158,7 +184,9 @@ export default function App() {
 
           if (firestoreProjects.length > 0) {
             setProjects(firestoreProjects);
-            loadProject(firestoreProjects[0]);
+            if (!activeProjectId) {
+              loadProject(firestoreProjects[0]);
+            }
             safeStorage.setItem("magneto_projects", JSON.stringify(firestoreProjects));
           } else if (cachedProjects.length > 0) {
             // Local projects exist but Firestore is empty -> Migrate them to Firebase
@@ -168,7 +196,9 @@ export default function App() {
             const reloaded = await fetchUserProjects(user.uid);
             if (reloaded.length > 0) {
               setProjects(reloaded);
-              loadProject(reloaded[0]);
+              if (!activeProjectId) {
+                loadProject(reloaded[0]);
+              }
               safeStorage.setItem("magneto_projects", JSON.stringify(reloaded));
             }
           } else {
@@ -265,12 +295,11 @@ export default function App() {
 
     setScript(proj.script);
     const loadedScenes = (proj.scenes || []).map((sc: StoryboardScene, idx: number) => {
-      const isBrokenUrl = (sc as any).imageUrl?.includes("1557804506-669a67965ba0") || (sc as any).imageUrl?.includes("pollinations.ai");
-      if ((sc as any).imageUrl && !isBrokenUrl) return sc;
-      const seed = encodeURIComponent(`${proj.id || 'proj'}_sc_${idx}_${(sc.visualPrompt || 'scene').slice(0, 15)}`);
+      const isBroken = isBrokenImageUrl((sc as any).imageUrl);
+      if ((sc as any).imageUrl && !isBroken) return sc;
       return {
         ...sc,
-        imageUrl: `https://picsum.photos/seed/${seed}/640/360`
+        imageUrl: createStoryboardSvg(sc, idx + 1, proj.platform || platform)
       };
     });
     setScenes(loadedScenes);
@@ -561,12 +590,11 @@ export default function App() {
 
       if (data.script && data.scenes && data.marketing) {
         const processedScenes = (data.scenes || []).map((sc: StoryboardScene, idx: number) => {
-          const isBrokenUrl = (sc as any).imageUrl?.includes("1557804506-669a67965ba0") || (sc as any).imageUrl?.includes("pollinations.ai");
-          if ((sc as any).imageUrl && !isBrokenUrl) return sc;
-          const seed = encodeURIComponent(`scene_${idx + 1}_${Date.now()}_${(sc.visualPrompt || 'scene').slice(0, 15)}`);
+          const isBroken = isBrokenImageUrl((sc as any).imageUrl);
+          if ((sc as any).imageUrl && !isBroken) return sc;
           return {
             ...sc,
-            imageUrl: `https://picsum.photos/seed/${seed}/640/360`
+            imageUrl: createStoryboardSvg(sc, idx + 1, platform)
           };
         });
 
@@ -622,7 +650,7 @@ export default function App() {
 
       // Fallback safeguard so the user is never left stranded
       if (!script) {
-        const fallbackScript = {
+        const fallbackScript: Script = {
           title: `${concept || "Campaign"} - High Converting Script`,
           spokenSeconds: parseSeconds(length),
           scriptText: `[PAUSE] ${hook.text} [EMPHASIS] Most ${audience || "teams"} spend hours struggling with inefficient workflows that drag down conversion rates. With our proven framework, you can ${outcome || "scale growth"} automatically. [PAUSE] Step one eliminates friction, step two optimizes conversions, and step three locks in sustainable compounding growth. [EMPHASIS] Don't wait, click below and transform your results today!`,
@@ -636,10 +664,10 @@ export default function App() {
           ]
         };
         const fallbackScenes: StoryboardScene[] = [
-          { id: "sc_1", timestamp: "0s - 10s", visualPrompt: `${concept} founder at workspace, close-up shot`, onScreenText: "STOP WASTING TIME", avatarDirection: "Points directly at camera with urgent engaging posture.", audioDescription: "Upbeat energetic tone.", imageUrl: `https://picsum.photos/seed/fb_sc1_${Date.now()}/640/360` },
-          { id: "sc_2", timestamp: "10s - 25s", visualPrompt: `Modern dashboard interface showing workflow bottlenecks`, onScreenText: "THE BOTTLENECK", avatarDirection: "Gestures towards monitor screen highlighting key metric.", audioDescription: "Smooth rhythmic background music.", imageUrl: `https://picsum.photos/seed/fb_sc2_${Date.now()}/640/360` },
-          { id: "sc_3", timestamp: "25s - 45s", visualPrompt: `Digital report showing rising growth chart`, onScreenText: "AUTOMATED RESULTS", avatarDirection: "Smiles confidently while presenting solution.", audioDescription: "Rising chime sound effect.", imageUrl: `https://picsum.photos/seed/fb_sc3_${Date.now()}/640/360` },
-          { id: "sc_4", timestamp: "45s - 60s", visualPrompt: `Call to action interface with button`, onScreenText: "GET STARTED NOW", avatarDirection: "Nods warmly guiding viewer to link.", audioDescription: "Upbeat crescendo transition.", imageUrl: `https://picsum.photos/seed/fb_sc4_${Date.now()}/640/360` }
+          { id: "sc_1", timestamp: "0s - 10s", visualPrompt: `${concept} founder at workspace, close-up shot`, onScreenText: "STOP WASTING TIME", avatarDirection: "Points directly at camera with urgent engaging posture.", audioDescription: "Upbeat energetic tone.", imageUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80" },
+          { id: "sc_2", timestamp: "10s - 25s", visualPrompt: `Modern dashboard interface showing workflow bottlenecks`, onScreenText: "THE BOTTLENECK", avatarDirection: "Gestures towards monitor screen highlighting key metric.", audioDescription: "Smooth rhythmic background music.", imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" },
+          { id: "sc_3", timestamp: "25s - 45s", visualPrompt: `Digital report showing rising growth chart`, onScreenText: "AUTOMATED RESULTS", avatarDirection: "Smiles confidently while presenting solution.", audioDescription: "Rising chime sound effect.", imageUrl: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=800&q=80" },
+          { id: "sc_4", timestamp: "45s - 60s", visualPrompt: `Call to action interface with button`, onScreenText: "GET STARTED NOW", avatarDirection: "Nods warmly guiding viewer to link.", audioDescription: "Upbeat crescendo transition.", imageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=800&q=80" }
         ];
         const fallbackMarketing = {
           linkedin: `🚀 Struggling with ${concept || "your workflow"}?\n\nHere is how ${audience || "top creators"} are achieving ${outcome || "scale"}:\n\n1. Eliminating friction\n2. Automating execution\n3. Focusing on high-leverage outputs\n\nTry Mangeto today!`,
@@ -803,6 +831,7 @@ export default function App() {
         onNewProject={handleNewProject}
         onLaunchTutorial={() => setIsTutorialOpen(true)}
         onHireDeveloper={() => setIsHireOpen(true)}
+        onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
         onOpenPricing={() => navigateTo('pricing')}
         onOpenBilling={() => navigateTo('billing')}
         onOpenLanding={() => navigateTo('landing')}
@@ -1092,27 +1121,31 @@ export default function App() {
             </div>
 
             <div className={activeTab === 'teleprompter' ? "" : "hidden"} id="tab_content_teleprompter">
-              <TeleprompterView
-                script={script}
-                isLoading={isGeneratingScriptAndPlan}
-                streamingText={streamingText}
-                progressStage={progressStage}
-                progressPercent={progressPercent}
-                errorMessage={errorMessage}
-                onRetry={() => {
-                  const targetHook = hooks.find(h => h.id === selectedHookId) || hooks[0];
-                  if (targetHook) handleSelectHookToScript(targetHook);
-                }}
-              />
+              <ErrorBoundary fallbackTitle="Teleprompter Speech System Error">
+                <TeleprompterView
+                  script={script}
+                  isLoading={isGeneratingScriptAndPlan}
+                  streamingText={streamingText}
+                  progressStage={progressStage}
+                  progressPercent={progressPercent}
+                  errorMessage={errorMessage}
+                  onRetry={() => {
+                    const targetHook = hooks.find(h => h.id === selectedHookId) || hooks[0];
+                    if (targetHook) handleSelectHookToScript(targetHook);
+                  }}
+                />
+              </ErrorBoundary>
             </div>
 
             <div className={activeTab === 'storyboard' ? "" : "hidden"} id="tab_content_storyboard">
-              <StoryboardView
-                scenes={scenes}
-                platform={platform}
-                isLoading={isGeneratingScriptAndPlan}
-                onUpdateSceneImage={handleUpdateSceneImage}
-              />
+              <ErrorBoundary fallbackTitle="Storyboard Visual Generator Error">
+                <StoryboardView
+                  scenes={scenes}
+                  platform={platform}
+                  isLoading={isGeneratingScriptAndPlan}
+                  onUpdateSceneImage={handleUpdateSceneImage}
+                />
+              </ErrorBoundary>
             </div>
 
             <div className={activeTab === 'marketing' ? "" : "hidden"} id="tab_content_marketing">
@@ -1303,6 +1336,11 @@ export default function App() {
           setSuccessMessage(`Welcome! Successfully authenticated as ${email}`);
           setTimeout(() => setSuccessMessage(null), 4000);
         }}
+      />
+
+      <DiagnosticTestDashboard
+        isOpen={isDiagnosticsOpen}
+        onClose={() => setIsDiagnosticsOpen(false)}
       />
     </div>
   );

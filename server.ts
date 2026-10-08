@@ -278,7 +278,8 @@ function buildFallbackPayload(concept: string, audience: string, outcome: string
         visualPrompt: `${concept} founder looking focused at workspace screen, close-up shot, style: consistent brand`,
         onScreenText: "STOP WASTING TIME",
         avatarDirection: "Points directly at camera with urgent, engaging posture.",
-        audioDescription: "Upbeat energetic tone with subtle synth bass."
+        audioDescription: "Upbeat energetic tone with subtle synth bass.",
+        imageUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80"
       },
       {
         id: "sc_2",
@@ -286,7 +287,8 @@ function buildFallbackPayload(concept: string, audience: string, outcome: string
         visualPrompt: `sleek modern dashboard interface showing workflow analytics, over the shoulder angle, style: consistent brand`,
         onScreenText: "THE BOTTLENECK",
         avatarDirection: "Gestures towards monitor screen highlighting key metric.",
-        audioDescription: "Smooth rhythmic background music."
+        audioDescription: "Smooth rhythmic background music.",
+        imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80"
       },
       {
         id: "sc_3",
@@ -294,7 +296,8 @@ function buildFallbackPayload(concept: string, audience: string, outcome: string
         visualPrompt: `vibrant digital report showing rising growth chart, macro focus shot, style: consistent brand`,
         onScreenText: "AUTOMATED RESULTS",
         avatarDirection: "Smiles confidently while presenting solution.",
-        audioDescription: "Rising chime sound effect."
+        audioDescription: "Rising chime sound effect.",
+        imageUrl: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=800&q=80"
       },
       {
         id: "sc_4",
@@ -302,7 +305,8 @@ function buildFallbackPayload(concept: string, audience: string, outcome: string
         visualPrompt: `bold clean final call to action interface with button, eye level cinematic focus, style: consistent brand`,
         onScreenText: "GET STARTED NOW",
         avatarDirection: "Nods warmly, guiding viewer to click link.",
-        audioDescription: "Upbeat crescendo transition."
+        audioDescription: "Upbeat crescendo transition.",
+        imageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=800&q=80"
       }
     ],
     marketing: {
@@ -727,65 +731,419 @@ Output format should be structured JSON matching this schema:
   }
 });
 
-// 4. ENDPOINT: Dynamic storyboard scene sketch generator (Multimodal Image Generation)
-app.post("/api/generate-image", async (req, res) => {
-  const startTime = Date.now();
-  console.log("[Module generate-image] Received scene sketch rendering request.");
+// Helper to create resilient, vector SVG storyboard panels matching exact video aspect ratios
+function buildStoryboardSvgDataUrl(prompt: string, title?: string, sceneNum: number = 1, timestamp?: string, platform: string = "16:9"): string {
+  const safeTitle = (title || "SCENE VISUAL").replace(/[<>&"]/g, "").slice(0, 36);
+  const safePrompt = (prompt || "Cinematic storyboard composition").replace(/[<>&"]/g, "").slice(0, 75);
+  const time = timestamp || `00:${String((sceneNum - 1) * 15).padStart(2, "0")}s`;
+  
+  const palette = [
+    { start: "#1e1b4b", mid: "#0f172a", glow: "#6366f1", accent: "#818cf8" },
+    { start: "#0f172a", mid: "#1e293b", glow: "#06b6d4", accent: "#38bdf8" },
+    { start: "#172554", mid: "#0f172a", glow: "#3b82f6", accent: "#60a5fa" },
+    { start: "#141c2e", mid: "#090d16", glow: "#a855f7", accent: "#c084fc" },
+  ];
+  const g = palette[(sceneNum - 1) % palette.length];
+
+  if (platform === "9:16") {
+    // 9:16 Vertical Portrait (Shorts, TikTok, Reels)
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 640" width="360" height="640">
+      <defs>
+        <linearGradient id="srv_bg_v_${sceneNum}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${g.start}" />
+          <stop offset="50%" stop-color="${g.mid}" />
+          <stop offset="100%" stop-color="#020617" />
+        </linearGradient>
+        <linearGradient id="srv_glow_v_${sceneNum}" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="${g.glow}" stop-opacity="0.8" />
+          <stop offset="100%" stop-color="${g.accent}" stop-opacity="0.8" />
+        </linearGradient>
+        <pattern id="srv_grid_v_${sceneNum}" width="30" height="30" patternUnits="userSpaceOnUse">
+          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#334155" stroke-width="0.75" stroke-opacity="0.2"/>
+        </pattern>
+      </defs>
+      
+      <rect width="360" height="640" fill="url(#srv_bg_v_${sceneNum})"/>
+      <rect width="360" height="640" fill="url(#srv_grid_v_${sceneNum})"/>
+      
+      <path d="M 18 36 L 18 20 L 34 20" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M 326 20 L 342 20 L 342 36" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M 18 604 L 18 620 L 34 620" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M 326 620 L 342 620 L 342 604" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+
+      <rect x="20" y="24" width="84" height="24" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+      <text x="62" y="40" fill="#f1f5f9" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="700" text-anchor="middle">SCENE ${sceneNum}</text>
+
+      <rect x="256" y="24" width="84" height="24" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+      <text x="298" y="40" fill="${g.accent}" font-family="system-ui, -apple-system, monospace" font-size="10" font-weight="700" text-anchor="middle">${time}</text>
+
+      <rect x="65" y="160" width="230" height="240" rx="20" fill="#090d16" fill-opacity="0.65" stroke="url(#srv_glow_v_${sceneNum})" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <circle cx="180" cy="250" r="44" fill="${g.start}" stroke="${g.accent}" stroke-width="2"/>
+      <circle cx="180" cy="238" r="16" fill="${g.accent}" fill-opacity="0.9"/>
+      <path d="M 152 278 C 152 260, 208 260, 208 278 Z" fill="${g.accent}" fill-opacity="0.75"/>
+
+      <line x1="110" y1="250" x2="130" y2="250" stroke="${g.accent}" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="230" y1="250" x2="250" y2="250" stroke="${g.accent}" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="180" y1="180" x2="180" y2="200" stroke="${g.accent}" stroke-width="1.5" stroke-linecap="round"/>
+
+      <rect x="135" y="136" width="90" height="20" rx="10" fill="#090d16" stroke="#334155" stroke-width="1"/>
+      <text x="180" y="150" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="700" text-anchor="middle">9:16 VERTICAL</text>
+
+      <rect x="20" y="450" width="320" height="52" rx="10" fill="#020617" fill-opacity="0.92" stroke="#334155" stroke-width="1"/>
+      <text x="180" y="478" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" letter-spacing="0.5" text-anchor="middle">${safeTitle}</text>
+      <text x="180" y="494" fill="${g.accent}" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" text-anchor="middle">ON-SCREEN OVERLAY</text>
+
+      <rect x="20" y="520" width="320" height="70" rx="10" fill="#090d16" fill-opacity="0.5" stroke="#1e293b" stroke-width="1"/>
+      <text x="180" y="542" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" text-anchor="middle">CAMERA / VISUAL DIRECTION</text>
+      <text x="180" y="564" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="500" text-anchor="middle">${safePrompt}</text>
+    </svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+
+  if (platform === "1:1") {
+    // 1:1 Square (LinkedIn, Feed)
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+      <defs>
+        <linearGradient id="srv_bg_sq_${sceneNum}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${g.start}" />
+          <stop offset="50%" stop-color="${g.mid}" />
+          <stop offset="100%" stop-color="#020617" />
+        </linearGradient>
+        <linearGradient id="srv_glow_sq_${sceneNum}" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="${g.glow}" stop-opacity="0.8" />
+          <stop offset="100%" stop-color="${g.accent}" stop-opacity="0.8" />
+        </linearGradient>
+        <pattern id="srv_grid_sq_${sceneNum}" width="32" height="32" patternUnits="userSpaceOnUse">
+          <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#334155" stroke-width="0.75" stroke-opacity="0.2"/>
+        </pattern>
+      </defs>
+      
+      <rect width="500" height="500" fill="url(#srv_bg_sq_${sceneNum})"/>
+      <rect width="500" height="500" fill="url(#srv_grid_sq_${sceneNum})"/>
+      
+      <path d="M 24 40 L 24 24 L 40 24" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M 460 24 L 476 24 L 476 40" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M 24 460 L 24 476 L 40 476" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M 460 476 L 476 476 L 476 460" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+
+      <rect x="24" y="24" width="88" height="24" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+      <text x="68" y="40" fill="#f1f5f9" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" text-anchor="middle">SCENE ${sceneNum}</text>
+
+      <rect x="388" y="24" width="88" height="24" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+      <text x="432" y="40" fill="${g.accent}" font-family="system-ui, -apple-system, monospace" font-size="10" font-weight="700" text-anchor="middle">${time}</text>
+
+      <rect x="140" y="110" width="220" height="190" rx="16" fill="#090d16" fill-opacity="0.65" stroke="url(#srv_glow_sq_${sceneNum})" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <circle cx="250" cy="185" r="36" fill="${g.start}" stroke="${g.accent}" stroke-width="2"/>
+      <circle cx="250" cy="175" r="14" fill="${g.accent}" fill-opacity="0.9"/>
+      <path d="M 226 210 C 226 195, 274 195, 274 210 Z" fill="${g.accent}" fill-opacity="0.75"/>
+
+      <rect x="36" y="340" width="428" height="50" rx="10" fill="#020617" fill-opacity="0.9" stroke="#334155" stroke-width="1"/>
+      <text x="250" y="371" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" text-anchor="middle">${safeTitle}</text>
+
+      <text x="250" y="425" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="500" text-anchor="middle">${safePrompt}</text>
+    </svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+
+  // 16:9 Landscape (YouTube, Slides)
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+    <defs>
+      <linearGradient id="srv_bg_${sceneNum}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${g.start}" />
+        <stop offset="60%" stop-color="${g.mid}" />
+        <stop offset="100%" stop-color="#020617" />
+      </linearGradient>
+      <linearGradient id="srv_glow_${sceneNum}" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="${g.glow}" stop-opacity="0.8" />
+        <stop offset="100%" stop-color="${g.accent}" stop-opacity="0.8" />
+      </linearGradient>
+      <pattern id="srv_grid_${sceneNum}" width="32" height="32" patternUnits="userSpaceOnUse">
+        <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#334155" stroke-width="0.75" stroke-opacity="0.2"/>
+      </pattern>
+    </defs>
+    
+    <rect width="640" height="360" fill="url(#srv_bg_${sceneNum})"/>
+    <rect width="640" height="360" fill="url(#srv_grid_${sceneNum})"/>
+    
+    <path d="M 28 44 L 28 28 L 44 28" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M 596 28 L 612 28 L 612 44" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M 28 316 L 28 332 L 44 332" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M 596 332 L 612 332 L 612 316" fill="none" stroke="${g.accent}" stroke-width="2.5" stroke-linecap="round"/>
+
+    <rect x="220" y="70" width="200" height="150" rx="16" fill="#090d16" fill-opacity="0.6" stroke="url(#srv_glow_${sceneNum})" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <circle cx="320" cy="125" r="30" fill="${g.start}" stroke="${g.accent}" stroke-width="2"/>
+    <circle cx="320" cy="118" r="12" fill="${g.accent}" fill-opacity="0.9"/>
+    <path d="M 302 144 C 302 134, 338 134, 338 144 Z" fill="${g.accent}" fill-opacity="0.7"/>
+    
+    <line x1="270" y1="125" x2="285" y2="125" stroke="${g.accent}" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="355" y1="125" x2="370" y2="125" stroke="${g.accent}" stroke-width="1.5" stroke-linecap="round"/>
+
+    <rect x="28" y="24" width="92" height="24" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="74" y="40" fill="#f1f5f9" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" text-anchor="middle">SCENE ${sceneNum}</text>
+
+    <rect x="520" y="24" width="92" height="24" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="566" y="40" fill="${g.accent}" font-family="system-ui, -apple-system, monospace" font-size="10" font-weight="700" text-anchor="middle">${time}</text>
+
+    <rect x="50" y="252" width="540" height="48" rx="10" fill="#020617" fill-opacity="0.9" stroke="#334155" stroke-width="1"/>
+    <text x="320" y="282" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" letter-spacing="0.5" text-anchor="middle">${safeTitle}</text>
+
+    <text x="320" y="332" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="500" text-anchor="middle">${safePrompt}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+// Thematic cinematic photographic library for instant, resilient visual scenes
+const THEMATIC_CINEMATIC_PHOTOS = [
+  {
+    tags: ["founder", "presenter", "camera", "pitch", "talking", "creator", "speaker", "monologue", "face", "portrait"],
+    url: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    tags: ["dashboard", "interface", "metric", "chart", "analytics", "data", "screen", "report", "graph", "stats"],
+    url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    tags: ["problem", "bottleneck", "frustrated", "stress", "friction", "time", "busy", "spreadsheet", "manual", "chaos"],
+    url: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    tags: ["solution", "growth", "automated", "automation", "success", "result", "victory", "celebration", "scale"],
+    url: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    tags: ["cta", "button", "mobile", "app", "action", "launch", "get started", "phone", "click", "device"],
+    url: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    tags: ["ai", "neural", "technology", "algorithm", "future", "digital", "copilot", "software", "code"],
+    url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    tags: ["executive", "female", "professional", "leader", "pitching", "presentation", "conference"],
+    url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    tags: ["team", "collaboration", "startup", "brainstorm", "meeting", "office", "working"],
+    url: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    tags: ["finance", "roi", "investor", "revenue", "dollars", "capital", "profit"],
+    url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    tags: ["studio", "lighting", "mic", "microphone", "recording", "video", "broadcast"],
+    url: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80"
+  }
+];
+
+const sceneVisualBufferCache = new Map<string, string>();
+
+async function generateRealisticSceneVisual(
+  prompt: string,
+  sceneNumber: number = 1,
+  platform: string = "16:9",
+  onScreenText?: string,
+  timestamp?: string
+): Promise<string> {
+  const cacheKey = `${prompt}_${sceneNumber}_${platform}`;
+  if (sceneVisualBufferCache.has(cacheKey)) {
+    return sceneVisualBufferCache.get(cacheKey)!;
+  }
+
+  // Tier 1: Attempt Gemini 3.1 Flash Lite Image (Active if paid key or image quota is available)
   try {
-    const { prompt, seed } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ error: "Scene description prompt is required." });
-    }
-
-    const imageSeed = seed || (Date.now() + Math.floor(Math.random() * 1000000));
     const ai = getGeminiClient();
-
-    let base64Url = "";
-
-    // 1. Try Gemini Image Generation models
-    const modelsToTry = ["imagen-3.0-generate-002", "gemini-2.5-flash-image"];
-    for (const modelName of modelsToTry) {
-      try {
-        const response = await ai.models.generateContent({
-          model: modelName,
-          contents: {
-            parts: [{ text: `${prompt}. Style: storyboard sketch, cinematic lighting, vector illustration, workspace view. Unique seed: ${imageSeed}` }]
-          },
-          config: {
-            imageConfig: {
-              aspectRatio: "16:9"
-            },
-            seed: Number(imageSeed)
-          }
-        });
-
-        if (response.candidates?.[0]?.content?.parts) {
-          for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData?.data) {
-              base64Url = `data:image/png;base64,${part.inlineData.data}`;
-              break;
-            }
-          }
+    const imagePromise = ai.models.generateContent({
+      model: "gemini-3.1-flash-lite-image",
+      contents: `${prompt}. Style: cinematic storyboard visual, photo-realistic frame shot, studio lighting, high resolution.`,
+      config: {
+        imageConfig: {
+          aspectRatio: platform === "9:16" ? "9:16" : platform === "1:1" ? "1:1" : "16:9"
         }
-        if (base64Url) break;
-      } catch (geminiErr: any) {
-        console.warn(`[Gemini Image model ${modelName} notice]:`, geminiErr?.message || geminiErr);
+      }
+    });
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Gemini image timeout")), 7000)
+    );
+    const response: any = await Promise.race([imagePromise, timeoutPromise]);
+    if (response?.candidates?.[0]?.content?.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData?.data) {
+          const dataUrl = `data:image/png;base64,${part.inlineData.data}`;
+          sceneVisualBufferCache.set(cacheKey, dataUrl);
+          return dataUrl;
+        }
       }
     }
+  } catch (_geminiErr: any) {
+    // Normal fallback when on free tier (quota limit 0)
+  }
 
-    // 2. If Gemini models do not output base64 data, use crisp, unique seed photo fallback from Picsum
-    if (!base64Url) {
-      const cleanSeed = encodeURIComponent(String(imageSeed));
-      base64Url = `https://picsum.photos/seed/${cleanSeed}/640/360`;
+  // Tier 2: Neural AI Image Engine (Pollinations Turbo with safe browser headers)
+  try {
+    const pollUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt || "Cinematic video shot") }?model=turbo&nologo=true`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    const resp = await fetch(pollUrl, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
+      }
+    });
+    clearTimeout(timeout);
+    if (resp.ok && (resp.headers.get("content-type") || "").includes("image/")) {
+      const buf = Buffer.from(await resp.arrayBuffer());
+      if (buf.length > 2500) {
+        const dataUrl = `data:image/jpeg;base64,${buf.toString("base64")}`;
+        sceneVisualBufferCache.set(cacheKey, dataUrl);
+        return dataUrl;
+      }
+    }
+  } catch (_pollErr: any) {
+    // Rate limit or connection fallback
+  }
+
+  // Tier 3: Thematic High-Resolution Cinematic Photographic Visual Library (Rock solid, 100% resilient)
+  try {
+    const pLower = (prompt || "").toLowerCase();
+    let match = THEMATIC_CINEMATIC_PHOTOS.find(item => item.tags.some(t => pLower.includes(t)));
+    if (!match) {
+      match = THEMATIC_CINEMATIC_PHOTOS[(sceneNumber - 1) % THEMATIC_CINEMATIC_PHOTOS.length];
     }
 
+    if (sceneVisualBufferCache.has(match.url)) {
+      const cached = sceneVisualBufferCache.get(match.url)!;
+      sceneVisualBufferCache.set(cacheKey, cached);
+      return cached;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5500);
+    const resp = await fetch(match.url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (resp.ok) {
+      const buf = Buffer.from(await resp.arrayBuffer());
+      if (buf.length > 1000) {
+        const dataUrl = `data:image/jpeg;base64,${buf.toString("base64")}`;
+        sceneVisualBufferCache.set(match.url, dataUrl);
+        sceneVisualBufferCache.set(cacheKey, dataUrl);
+        return dataUrl;
+      }
+    }
+  } catch (_photoErr: any) {
+    // Fall through to SVG
+  }
+
+  // Tier 4: Stylized Vector SVG Storyboard Mockup
+  const svgFallback = buildStoryboardSvgDataUrl(prompt, onScreenText, sceneNumber, timestamp, platform);
+  return svgFallback;
+}
+
+// 4. ENDPOINT: Storyboard Scene Sketch Generator (DEPRECATED & DISABLED)
+// Image generation has been decommissioned in favor of direct AI prompt cards for Midjourney, Flux, Stable Diffusion, and Runway.
+app.post("/api/generate-image", async (req, res) => {
+  const { prompt } = req.body || {};
+  console.log("[Module generate-image] Request intercepted: Image generation is retired in favor of AI prompt cards.");
+  return res.status(200).json({
+    disabled: true,
+    retired: true,
+    status: "image_generation_disabled",
+    message: "Image generation has been deprecated. Magneto now outputs pure AI prompt cards formatted for Midjourney, Flux, Stable Diffusion, and Runway.",
+    prompt: prompt || "Cinematic video scene prompt"
+  });
+});
+
+// Circuit breaker to avoid repeating 429 quota exhaustion requests on Gemini TTS
+let ttsQuotaCooldownUntil: number = 0;
+
+// 4B. ENDPOINT: Studio AI Voiceover Speech Generator (Gemini 3.8 TTS Engine)
+app.post("/api/generate-speech", async (req, res) => {
+  const startTime = Date.now();
+  try {
+    const { text, voiceName = "Kore" } = req.body || {};
+    if (!text || typeof text !== "string") {
+      return res.status(400).json({ error: "Text is required for voiceover generation." });
+    }
+
+    const cleanText = text
+      .replace(/\[EMPHASIS\]/gi, "")
+      .replace(/\[PAUSE\]/gi, " ... ")
+      .replace(/\[\/?EMPHASIS\]/gi, "")
+      .replace(/\[\/?PAUSE\]/gi, " ... ")
+      .replace(/\[.*?\]/g, "")
+      .trim();
+
+    if (!cleanText) {
+      return res.status(400).json({ error: "Text contains no speakable speech." });
+    }
+
+    const allowedVoices = ["Kore", "Puck", "Fenrir", "Charon", "Zephyr"];
+    const targetVoice = allowedVoices.includes(voiceName) ? voiceName : "Kore";
+
+    // If quota cooldown is currently active, immediately route to browser speech synthesis
+    if (Date.now() < ttsQuotaCooldownUntil) {
+      return res.status(200).json({
+        fallbackToBrowser: true,
+        quotaCooldown: true,
+        message: "Using browser voice engine (Gemini TTS in daily quota cooldown)."
+      });
+    }
+
+    // Check memory cache
+    const cacheKey = `tts_${targetVoice}_${cleanText.slice(0, 80)}_${cleanText.length}`;
+    const cached = getCache(scriptCache, cacheKey);
+    if (cached) {
+      return res.status(200).json({ audioUrl: cached, cached: true, voiceName: targetVoice });
+    }
+
+    const ai = getGeminiClient();
+    const speechPromise = ai.models.generateContent({
+      model: "gemini-3.8-flash-lite-tts",
+      contents: [{ role: "user", parts: [{ text: cleanText }] }],
+      config: {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: targetVoice }
+          }
+        }
+      }
+    });
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Gemini speech generation timeout")), 6000)
+    );
+
+    const response: any = await Promise.race([speechPromise, timeoutPromise]);
+
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) {
+      throw new Error("No audio stream received from Gemini speech model.");
+    }
+
+    const audioUrl = `data:audio/wav;base64,${base64Audio}`;
+    setCache(scriptCache, cacheKey, audioUrl);
+
     const latency = Date.now() - startTime;
-    console.log(`[Module generate-image] Rendered sketch in ${latency}ms`);
-    res.json({ imageUrl: base64Url });
+    console.log(`[Module generate-speech] Generated speech with ${targetVoice} in ${latency}ms`);
+    return res.status(200).json({ audioUrl, voiceName: targetVoice, latency });
   } catch (error: any) {
-    console.warn("Image generation fallback activated:", error.message);
-    const fallbackSeed = Date.now() + Math.floor(Math.random() * 1000);
-    res.json({ imageUrl: `https://picsum.photos/seed/${fallbackSeed}/640/360` });
+    const errorMsg = String(error?.message || error || "");
+    const isQuotaError = errorMsg.includes("429") || errorMsg.includes("RESOURCE_EXHAUSTED") || errorMsg.includes("quota");
+    
+    if (isQuotaError) {
+      ttsQuotaCooldownUntil = Date.now() + 60 * 60 * 1000; // 1 hour cooldown
+      console.log("[Module generate-speech] Gemini TTS daily quota limit reached, activating browser voice engine fallback.");
+    } else {
+      console.warn("[Module generate-speech] Speech notice, switching to browser speech:", errorMsg.slice(0, 100));
+    }
+
+    return res.status(200).json({
+      fallbackToBrowser: true,
+      quotaCooldown: isQuotaError,
+      error: "Gemini TTS unavailable, switched to browser speech."
+    });
   }
 });
 

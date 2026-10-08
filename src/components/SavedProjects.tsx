@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Clock, Trash2, ArrowRight, Video, Copy, HelpCircle, Briefcase, CreditCard, User as UserIcon, LogIn, LogOut, ChevronDown, ShieldCheck } from "lucide-react";
+import { Clock, Trash2, ArrowRight, Video, Copy, HelpCircle, Briefcase, CreditCard, User as UserIcon, LogIn, LogOut, ChevronDown, ShieldCheck, Activity } from "lucide-react";
 import { Project } from "../types";
 
 interface SavedProjectsProps {
@@ -11,6 +11,7 @@ interface SavedProjectsProps {
   onNewProject: () => void;
   onLaunchTutorial: () => void;
   onHireDeveloper: () => void;
+  onOpenDiagnostics?: () => void;
   onOpenPricing?: () => void;
   onOpenBilling?: () => void;
   onOpenLanding?: () => void;
@@ -33,6 +34,7 @@ export default function SavedProjects({
   onNewProject,
   onLaunchTutorial,
   onHireDeveloper,
+  onOpenDiagnostics,
   onOpenPricing,
   onOpenBilling,
   onOpenLanding,
@@ -175,6 +177,18 @@ export default function SavedProjects({
             <HelpCircle className="w-3.5 h-3.5 text-indigo-400" />
             Tour & Help
           </button>
+
+          {onOpenDiagnostics && (
+            <button
+              onClick={onOpenDiagnostics}
+              className="px-3 py-1.5 bg-slate-800/90 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 rounded-md text-xs font-semibold border border-emerald-500/30 transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm group"
+              id="btn_open_diagnostics"
+              title="Open E2E Deep Diagnostic Test Dashboard"
+            >
+              <Activity className="w-3.5 h-3.5 text-emerald-400 group-hover:animate-pulse" />
+              <span>Diagnostics</span>
+            </button>
+          )}
 
           <button
             onClick={onHireDeveloper}

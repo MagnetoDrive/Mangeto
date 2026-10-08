@@ -3,26 +3,28 @@ import { getAuth, signInAnonymously } from "firebase/auth";
 import { initializeFirestore, doc, setDoc, setLogLevel, memoryLocalCache } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+import appletConfig from "../../firebase-applet-config.json";
+
 // Keep setLogLevel at "warn" in development so real warnings/errors are visible
 setLogLevel("warn");
 
-// Defensive initialization with dynamic environment variables or production project configuration
+// Defensive initialization with dynamic environment variables or provisioned applet configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyB-BwS0rv53mTkKmcjhSfkCTl0COeTf-ck",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "magneto-1750e.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "magneto-1750e",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "magneto-1750e.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "100091620250",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:100091620250:web:2280b209b0f695db29a823"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || appletConfig.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || appletConfig.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || appletConfig.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || appletConfig.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || appletConfig.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || appletConfig.appId
 };
 
-const databaseId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || "G-6DPJB2EXC9";
+const databaseId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || appletConfig.firestoreDatabaseId;
 
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: true,
   localCache: memoryLocalCache(),
 }, databaseId);
 export const storage = getStorage(app);

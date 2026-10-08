@@ -591,7 +591,7 @@ export default function LandingPage({
                       {activeMarketingChannel === 'landingPage' && (
                         <div className="space-y-2 font-sans">
                           <p className="text-slate-400 text-xs uppercase font-mono">HERO HEADLINE:</p>
-                          <p className="text-sm font-bold text-slate-100">"Turn Your Sales Deck Into A Viral Video Campaign."</p>
+                          <p className="text-sm font-bold text-slate-100">"Turn Your Sales Deck Into A High-Impact Video Pitch Campaign."</p>
                           <p className="text-slate-400 text-xs uppercase font-mono pt-2">SUBHEADING:</p>
                           <p className="text-xs text-slate-300">"Transform slides into ranked scroll-stopping hooks, teleprompter scripts, and 4-scene video storyboards in minutes."</p>
                           <p className="text-slate-400 text-xs uppercase font-mono pt-2">CALL TO ACTION BUTTON:</p>
@@ -600,7 +600,7 @@ export default function LandingPage({
                       )}
                       {activeMarketingChannel === 'youtube' && (
                         <div className="space-y-2 whitespace-pre-line">
-                          <p className="text-slate-100 font-bold font-sans">How to Turn Any Pitch Deck into a Viral Short-Form Video (Full Walkthrough)</p>
+                          <p className="text-slate-100 font-bold font-sans">How to Turn Any Pitch Deck into a High-Impact Short-Form Video Pitch (Full Walkthrough)</p>
                           <p>In this video, discover how Mangeto turns static sales decks and product ideas into high-converting video pitch kits, teleprompter scripts, and multi-channel campaigns.</p>
                           <p className="text-indigo-400 font-sans font-semibold">🔗 Start creating your free campaign kits: https://mangeto-v1.vercel.app</p>
                         </div>

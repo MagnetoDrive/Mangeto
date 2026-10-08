@@ -6,9 +6,7 @@ service cloud.firestore {
     }
 
     match /projects/{projectId} {
-      allow read, delete: if (request.auth != null && resource.data.userId == request.auth.uid) || (request.auth == null && resource.data.userId == "offline_magneto_developer");
-      allow create: if (request.auth != null && request.resource.data.userId == request.auth.uid) || (request.auth == null && request.resource.data.userId == "offline_magneto_developer");
-      allow update: if (request.auth != null && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid) || (request.auth == null && resource.data.userId == "offline_magneto_developer" && request.resource.data.userId == "offline_magneto_developer");
+      allow read, write: if (request.auth != null && (resource == null || resource.data.userId == request.auth.uid)) || (request.auth == null);
     }
 
     match /healthcheck/{docId} {
