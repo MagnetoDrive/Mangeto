@@ -181,7 +181,7 @@ export default function LaunchDeployView({ project, onUpdateProject }: LaunchDep
 
     try {
       // Step 1: Initialize launch pipeline
-      addLog("🚀 Initializing Mangeto Launch Engine...");
+      addLog("🚀 Initializing Magneto Pro Launch Engine...");
       await delay(1000);
 
       // Deploy to GitHub if token provided

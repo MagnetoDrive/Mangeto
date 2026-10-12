@@ -490,7 +490,7 @@ export default function AdminControl({ onBack }: AdminControlProps) {
 
           <div className="text-center space-y-1.5 mb-8">
             <h1 className="text-xl font-black text-slate-100 tracking-tight flex items-center justify-center gap-2">
-              Mangeto Admin Control
+              Magneto <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-gradient-to-r from-indigo-500 to-purple-600 text-white">PRO</span> Admin Control
             </h1>
             <p className="text-xs text-slate-400">Restricted analytical viewport access</p>
           </div>
@@ -837,7 +837,7 @@ export default function AdminControl({ onBack }: AdminControlProps) {
                           <td className="py-3 px-4 text-slate-200 font-medium leading-relaxed whitespace-pre-wrap">{f.message}</td>
                           <td className="py-3 px-4 text-right">
                             <a
-                              href={`mailto:${f.user.includes('@') ? f.user : 'tsepomothibeditimothymotsatse@gmail.com'}?subject=Re: Mangeto Feedback - ${f.type.toUpperCase()}&body=Hi ${f.user.includes('@') ? f.user.split('@')[0] : 'there'},%0D%0A%0D%0AThank you for sharing your feedback with Mangeto!%0D%0A%0D%0ARegards,%0D%0ATsepo Motsatse`}
+                              href={`mailto:${f.user.includes('@') ? f.user : 'tsepomothibeditimothymotsatse@gmail.com'}?subject=Re: Magneto Pro Feedback - ${f.type.toUpperCase()}&body=Hi ${f.user.includes('@') ? f.user.split('@')[0] : 'there'},%0D%0A%0D%0AThank you for sharing your feedback with Magneto Pro!%0D%0A%0D%0ARegards,%0D%0ATsepo Motsatse`}
                               className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-755 text-indigo-400 hover:text-indigo-300 rounded text-[11px] font-semibold transition border border-slate-750"
                             >
                               <Mail className="w-3 h-3" />

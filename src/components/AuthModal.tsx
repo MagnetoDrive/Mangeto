@@ -140,8 +140,8 @@ export default function AuthModal({
               <ShieldCheck className="w-5 h-5" />
             </div>
             <h2 className="text-xl font-extrabold text-slate-100 tracking-tight">
-              {mode === "signin" && "Welcome Back to Mangeto"}
-              {mode === "signup" && "Create Your Mangeto Account"}
+              {mode === "signin" && "Welcome Back to Magneto Pro"}
+              {mode === "signup" && "Create Your Magneto Pro Account"}
               {mode === "forgot" && "Reset Password"}
             </h2>
           </div>

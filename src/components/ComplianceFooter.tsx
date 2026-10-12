@@ -19,7 +19,7 @@ export default function ComplianceFooter({ onNavigateTo, enableAdmin = true }: C
               <span>100% Automated Self-Service SaaS</span>
             </div>
             <p className="text-slate-400 text-[11px] leading-relaxed">
-              Mangeto is a cloud-based software subscription platform delivering instant digital entitlement, automated AI scripts, and teleprompter workflows with zero manual fulfillment delay.
+              Magneto Pro is a cloud-based software subscription platform delivering instant digital entitlement, automated AI scripts, and teleprompter workflows with zero manual fulfillment delay.
             </p>
           </div>
 
@@ -52,7 +52,7 @@ export default function ComplianceFooter({ onNavigateTo, enableAdmin = true }: C
 
         {/* Bottom row: Links & Copyright */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]">
-          <p>© 2026 Mangeto. AI Video Pitch & Hook Generator. All rights reserved.</p>
+          <p>© 2026 Magneto Pro. AI Video Pitch & Hook Generator. All rights reserved.</p>
 
           <div className="flex flex-wrap items-center justify-center gap-5">
             <button

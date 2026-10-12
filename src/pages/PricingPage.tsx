@@ -35,24 +35,14 @@ export default function PricingPage({
   onNavigateTo,
   currentUser
 }: PricingPageProps) {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const [selectedPlanForEmbed, setSelectedPlanForEmbed] = useState<'Starter' | 'Pro' | null>(null);
+  const [isLTDCheckoutOpen, setIsLTDCheckoutOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [checkoutCompleteReceipt, setCheckoutCompleteReceipt] = useState<string | null>(null);
   const [isStartingFree, setIsStartingFree] = useState(false);
+  const [isActivatingLTD, setIsActivatingLTD] = useState(false);
 
-  // Whop plan IDs from environment or defaults requested by user
-  const starterPlanMonthly = import.meta.env.VITE_WHOP_PLAN_STARTER_MONTHLY || "plan_starter_monthly";
-  const starterPlanYearly = import.meta.env.VITE_WHOP_PLAN_STARTER_YEARLY || "plan_starter_yearly";
-  const proPlanMonthly = import.meta.env.VITE_WHOP_PLAN_PRO_MONTHLY || "plan_pro_monthly";
-  const proPlanYearly = import.meta.env.VITE_WHOP_PLAN_PRO_YEARLY || "plan_pro_yearly";
-
-  const activeStarterPlanId = billingCycle === 'monthly' ? starterPlanMonthly : starterPlanYearly;
-  const activeProPlanId = billingCycle === 'monthly' ? proPlanMonthly : proPlanYearly;
-  const currentEmbedPlanId = selectedPlanForEmbed === 'Starter' ? activeStarterPlanId : activeProPlanId;
-
-  const starterPrice = billingCycle === 'monthly' ? '$19' : '$15';
-  const proPrice = billingCycle === 'monthly' ? '$49' : '$39';
+  // Lifetime Deal Plan ID from environment or default
+  const ltdPlanId = import.meta.env.VITE_WHOP_PLAN_LTD_ID || "plan_magneto_ltd_79";
 
   const handleStartFree = async () => {
     setIsStartingFree(true);
@@ -93,22 +83,44 @@ export default function PricingPage({
     }
   };
 
+  const handleLTDSuccess = async (receiptId: string) => {
+    setIsActivatingLTD(true);
+    setCheckoutCompleteReceipt(receiptId);
+    try {
+      if (currentUser?.uid) {
+        const userRef = doc(db, "users", currentUser.uid);
+        await setDoc(userRef, {
+          plan: "lifetime",
+          planStatus: "Lifetime Deal",
+          projectsLimit: 250,
+          projectsUsed: 0,
+          receiptId,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      }
+    } catch (err) {
+      console.warn("LTD activation exception:", err);
+    } finally {
+      setIsActivatingLTD(false);
+    }
+  };
+
   const faqs = [
     {
-      q: "How does billing with Whop work?",
-      a: "Whop is our official subscription checkout and customer management system. When you subscribe, Whop processes your payment with bank-grade encryption and instantly activates your Mangeto account. You can manage invoices, upgrade, or cancel in your Whop Customer Hub anytime with one click."
+      q: "How does the Lifetime Deal (LTD) work?",
+      a: "You make a single, one-time payment of $79 and receive permanent access to Magneto Pro. You will never be charged a monthly, annual, or recurring renewal fee. Your account includes 250 high-impact video pitch projects every month and all future software features."
     },
     {
-      q: "What happens when I subscribe without leaving the app?",
-      a: "Our embedded Whop checkout runs directly within Mangeto. You enter your payment method right here, and your license is provisioned in real-time. There are no external redirects required."
+      q: "What happens right after I complete checkout?",
+      a: "Our embedded checkout runs directly within Magneto Pro. Your one-time license is provisioned in real time, unlocking full access immediately without waiting, redirecting, or manual approval."
     },
     {
-      q: "Can I cancel my subscription at any time?",
-      a: "Yes. Simply click 'Billing' in Mangeto or visit https://whop.com/hub. You can cancel with a single click. Your access and credits remain active until the end of your current prepaid billing cycle."
+      q: "Are future feature updates included in this Lifetime Deal?",
+      a: "Yes! All future platform upgrades, new prompt engine presets (including Leonardo.ai, Flux, SD, Runway), teleprompter enhancements, and marketing kit updates are included for lifetime license holders at no additional cost."
     },
     {
       q: "What is your refund policy?",
-      a: "We offer a 14-day refund window on software subscriptions if your monthly generation quota has not been consumed. You can reach out to tsepomotsatse@gmail.com for instant assistance."
+      a: "We want you to evaluate Magneto Pro with complete confidence. We offer a 14-day money-back guarantee. If Magneto Pro does not fit your video production workflow, contact us at tsepomotsatse@gmail.com for a swift, full refund."
     }
   ];
 
@@ -137,7 +149,7 @@ export default function PricingPage({
             )}
             <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Whop Verified Merchant</span>
+              <span>Verified Secure Merchant</span>
             </span>
           </div>
         </div>
@@ -145,55 +157,30 @@ export default function PricingPage({
 
       {/* Hero Section */}
       <section className="max-w-5xl mx-auto px-6 pt-12 pb-8 text-center space-y-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Transparent Self-Service Software Pricing</span>
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>Early Adopter Founder Pass · Limited Lifetime Deal</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-          Automated Pitch Deck to Video Plans
+          Pay Once. Own Magneto Pro Forever.
         </h1>
         <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
-          Select the plan that matches your production volume. Subscribe securely with Whop embedded checkout directly in this app.
+          Say goodbye to recurring subscription fatigue. Get full lifetime access to our AI pitch deck-to-video studio, teleprompter, and visual storyboard engine with a single one-time payment.
         </p>
-
-        {/* Monthly / Yearly Toggle */}
-        <div className="pt-4 flex items-center justify-center gap-3">
-          <span className={`text-xs font-medium ${billingCycle === 'monthly' ? 'text-white font-bold' : 'text-slate-400'}`}>
-            Monthly
-          </span>
-          <button
-            type="button"
-            onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-            className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-200 ${
-              billingCycle === 'yearly' ? 'bg-indigo-600 justify-end' : 'bg-slate-800 justify-start'
-            }`}
-            aria-label="Toggle billing cycle"
-          >
-            <div className="bg-white w-4 h-4 rounded-full shadow-md" />
-          </button>
-          <div className="flex items-center gap-2">
-            <span className={`text-xs font-medium ${billingCycle === 'yearly' ? 'text-white font-bold' : 'text-slate-400'}`}>
-              Annual
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-              Save 20%
-            </span>
-          </div>
-        </div>
       </section>
 
-      {/* Pricing Cards Grid (3 Plans: Free, Starter, Pro) */}
-      <section className="max-w-7xl mx-auto px-6 py-8 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+      {/* Pricing Cards Grid (2 Focused Options: Free Trial vs Lifetime Deal) */}
+      <section className="max-w-5xl mx-auto px-6 py-6 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           
-          {/* PLAN 1: Free ($0) */}
-          <div className="bg-slate-900/60 border border-slate-800 hover:border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col justify-between relative shadow-xl transition duration-200">
+          {/* OPTION 1: Free Trial ($0) */}
+          <div className="lg:col-span-5 bg-slate-900/60 border border-slate-800 hover:border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col justify-between relative shadow-xl transition duration-200">
             <div className="space-y-6">
               <div className="space-y-1">
                 <span className="text-xs font-mono uppercase font-bold text-slate-400">Curious Creators & Founders</span>
-                <h2 className="text-2xl font-black text-white">Free Trial</h2>
-                <p className="text-xs text-slate-400">Test the video pitch & hook generator with no credit card required.</p>
+                <h2 className="text-2xl font-black text-white">Free Evaluation</h2>
+                <p className="text-xs text-slate-400">Test the video pitch & hook generator with zero risk and no credit card required.</p>
               </div>
 
               <div className="flex items-baseline gap-1">
@@ -224,15 +211,15 @@ export default function PricingPage({
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>4-scene video storyboard with visual direction</span>
+                    <span>4-scene video storyboard with visual directions</span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>5-channel marketing kit</span>
+                    <span>Leonardo.ai free tier prompt preset</span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Standard export formats</span>
+                    <span>Standard text export formats</span>
                   </li>
                 </ul>
               </div>
@@ -253,139 +240,88 @@ export default function PricingPage({
                 ) : (
                   <>
                     <Gift className="w-4 h-4 text-emerald-400" />
-                    <span>Start free trial</span>
+                    <span>Start Free Evaluation</span>
                   </>
                 )}
               </button>
             </div>
           </div>
 
-          {/* PLAN 2: Starter ($19/mo or $15/mo) */}
-          <div className={`bg-slate-900/90 border-2 rounded-2xl p-6 sm:p-8 flex flex-col justify-between relative shadow-xl transition duration-200 ${
-            selectedPlanForEmbed === 'Starter' 
-              ? 'border-indigo-400 ring-2 ring-indigo-400/50' 
-              : 'border-slate-800 hover:border-slate-700'
-          }`}>
-            <div className="space-y-6">
-              <div className="space-y-1">
-                <span className="text-xs font-mono uppercase font-bold text-indigo-400">Solo Founders & Creators</span>
-                <h2 className="text-2xl font-black text-white">Starter</h2>
-                <p className="text-xs text-slate-400">Consistent video publishing with reliable, high-converting copywriting frameworks.</p>
-              </div>
-
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-white">{starterPrice}</span>
-                <span className="text-xs text-slate-400">
-                  / month {billingCycle === 'yearly' && '(billed annually)'}
-                </span>
-              </div>
-
-              <div className="h-px bg-slate-800 w-full" />
-
-              <div className="space-y-3">
-                <span className="text-[11px] font-mono text-indigo-300 uppercase tracking-wider font-semibold">Included features:</span>
-                <ul className="space-y-3 text-xs text-slate-300">
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span><strong>50 projects / month</strong></span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Proven pitch & hook copywriting frameworks</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>10 to 20 hooks ranked top 3</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>30s/60s/90s teleprompter script builder</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Interactive browser teleprompter with cues</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Standard export formats</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Solo founder license</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="pt-8">
-              <button
-                onClick={() => setSelectedPlanForEmbed(selectedPlanForEmbed === 'Starter' ? null : 'Starter')}
-                className={`w-full py-3.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 ${
-                  selectedPlanForEmbed === 'Starter'
-                    ? 'bg-slate-800 text-slate-200 border border-slate-700'
-                    : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25'
-                }`}
-                id="btn_pricing_starter"
-              >
-                <CreditCard className="w-4 h-4" />
-                <span>{selectedPlanForEmbed === 'Starter' ? "Close Whop Checkout" : "Start Starter"}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* PLAN 3: Pro ($49/mo or $39/mo) */}
-          <div className={`bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950/40 border-2 rounded-2xl p-6 sm:p-8 flex flex-col justify-between relative shadow-2xl transition duration-200 ${
-            selectedPlanForEmbed === 'Pro' 
-              ? 'border-indigo-400 ring-2 ring-indigo-400/50' 
-              : 'border-indigo-500/80 hover:border-indigo-400'
-          }`}>
-            <div className="absolute -top-3.5 right-6 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-mono uppercase text-[10px] font-bold px-3 py-1 rounded-full shadow-md tracking-wider flex items-center gap-1">
+          {/* OPTION 2: Magneto Pro Lifetime Deal ($79 One-Time) */}
+          <div className="lg:col-span-7 bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950/50 border-2 border-indigo-500/80 rounded-2xl p-6 sm:p-8 flex flex-col justify-between relative shadow-2xl shadow-indigo-950/60 transition duration-200">
+            {/* Top Founder Pass Ribbon */}
+            <div className="absolute -top-3.5 right-6 bg-gradient-to-r from-amber-500 via-indigo-500 to-purple-600 text-white font-mono uppercase text-[10px] font-bold px-3 py-1 rounded-full shadow-lg tracking-wider flex items-center gap-1.5">
               <Star className="w-3 h-3 fill-white" />
-              Most Popular
+              <span>Founder Pass · Limited Lifetime Deal</span>
             </div>
 
             <div className="space-y-6">
               <div className="space-y-1">
-                <span className="text-xs font-mono uppercase font-bold text-indigo-400">Small Teams & Agencies</span>
-                <h2 className="text-2xl font-black text-white">Pro</h2>
-                <p className="text-xs text-slate-400">High-volume production, extra aspect ratios, and priority processing.</p>
+                <span className="text-xs font-mono uppercase font-bold text-indigo-400">Lifetime Entitlement</span>
+                <h2 className="text-2xl sm:text-3xl font-black text-white">Magneto Pro Lifetime Pass</h2>
+                <p className="text-xs text-slate-300">Complete AI pitch deck-to-video studio with full creative control. Never pay monthly.</p>
               </div>
 
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-white">{proPrice}</span>
-                <span className="text-xs text-slate-400">
-                  / month {billingCycle === 'yearly' && '(billed annually)'}
+              {/* Price Lockup */}
+              <div className="flex flex-wrap items-baseline gap-2.5">
+                <span className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">$79</span>
+                <span className="text-xs font-semibold text-emerald-400 font-mono uppercase bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  One-time payment
+                </span>
+                <span className="text-xs text-slate-400 line-through">
+                  $299 Value
+                </span>
+                <span className="text-[11px] text-amber-400 font-mono">
+                  (Save 73% during launch)
                 </span>
               </div>
 
               <div className="h-px bg-slate-800 w-full" />
 
               <div className="space-y-3">
-                <span className="text-[11px] font-mono text-indigo-300 uppercase tracking-wider font-semibold">Everything in Starter, plus:</span>
-                <ul className="space-y-3 text-xs text-slate-300">
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span><strong>250 projects / month</strong></span>
+                <span className="text-[11px] font-mono text-indigo-300 uppercase tracking-wider font-semibold">
+                  Everything unlocked forever:
+                </span>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-200">
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>250 video projects / month</strong></span>
                   </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Team seats & shared workspaces <span className="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-800/60 px-1.5 py-0.2 rounded font-mono font-medium ml-1">Coming soon</span></span>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Full Deck-to-Video Synthesizer</strong> (PDF, PPT, notes)</span>
                   </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span><strong>Aspect ratio formats: 9:16 vertical, 1:1 square, 16:9 widescreen</strong></span>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Visual Prompt Studio</strong> (Leonardo.ai, Flux, SD, Runway)</span>
                   </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span><strong>Automated pitch deck-to-video parser</strong></span>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Interactive Browser Teleprompter</strong> with live scroll</span>
                   </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Full 5-channel marketing launch kit</span>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Multi-Aspect Ratios</strong> (9:16 vertical, 1:1 square, 16:9)</span>
                   </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span><strong>Priority support with fast processing</strong></span>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Studio AI Voiceover Audio</strong> & Gemini narration engine</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Full 5-Channel Marketing Kits</strong> (LinkedIn, X, Email, Web, YT)</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>Batch Prompt & TXT/SRT Export</strong> downloads</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>All Future Feature Updates</strong> included with 0 extra fees</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span><strong>14-Day 100% Money-Back Guarantee</strong></span>
                   </li>
                 </ul>
               </div>
@@ -393,24 +329,24 @@ export default function PricingPage({
 
             <div className="pt-8">
               <button
-                onClick={() => setSelectedPlanForEmbed(selectedPlanForEmbed === 'Pro' ? null : 'Pro')}
-                className={`w-full py-3.5 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 ${
-                  selectedPlanForEmbed === 'Pro'
+                onClick={() => setIsLTDCheckoutOpen(!isLTDCheckoutOpen)}
+                className={`w-full py-4 rounded-xl font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 ${
+                  isLTDCheckoutOpen
                     ? 'bg-slate-800 text-slate-200 border border-slate-700'
-                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-xl shadow-indigo-600/30'
+                    : 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:opacity-95 text-white shadow-xl shadow-indigo-600/30'
                 }`}
-                id="btn_pricing_pro"
+                id="btn_pricing_ltd"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>{selectedPlanForEmbed === 'Pro' ? "Close Whop Checkout" : "Start Pro"}</span>
+                <span>{isLTDCheckoutOpen ? "Close Checkout Form" : "Claim Lifetime Access for $79"}</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* EMBEDDED WHOP CHECKOUT SECTION */}
-        {selectedPlanForEmbed && (
-          <div className="mt-12 bg-slate-900 border border-indigo-500/50 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in duration-300" id="whop-checkout-container">
+        {/* EMBEDDED CHECKOUT SECTION FOR LTD */}
+        {isLTDCheckoutOpen && (
+          <div className="mt-12 bg-slate-900 border border-indigo-500/50 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in duration-300" id="ltd-checkout-container">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
@@ -418,16 +354,16 @@ export default function PricingPage({
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    Complete Subscription: {selectedPlanForEmbed} Plan ({billingCycle})
+                    Complete Lifetime Pass Purchase ($79 One-Time)
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Embedded Whop Checkout &bull; Plan ID: <code className="font-mono text-indigo-300">{currentEmbedPlanId}</code>
+                    Instant Digital Entitlement &bull; Plan ID: <code className="font-mono text-indigo-300">{ltdPlanId}</code>
                   </p>
                 </div>
               </div>
 
               <button
-                onClick={() => setSelectedPlanForEmbed(null)}
+                onClick={() => setIsLTDCheckoutOpen(false)}
                 className="text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer self-start sm:self-auto"
               >
                 Close Checkout
@@ -441,9 +377,9 @@ export default function PricingPage({
                   <div className="w-16 h-16 bg-emerald-500/20 border border-emerald-500/40 rounded-full flex items-center justify-center mx-auto text-emerald-400">
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
-                  <h4 className="text-2xl font-bold text-white">Subscription Active!</h4>
-                  <p className="text-xs text-slate-400 max-w-md mx-auto">
-                    Your Whop payment has been verified. Receipt ID: <span className="font-mono text-indigo-400">{checkoutCompleteReceipt}</span>
+                  <h4 className="text-2xl font-bold text-white">Lifetime Access Activated!</h4>
+                  <p className="text-xs text-slate-300 max-w-md mx-auto">
+                    Your one-time purchase has been confirmed. You now have lifetime access to Magneto Pro. Receipt ID: <span className="font-mono text-indigo-400">{checkoutCompleteReceipt}</span>
                   </p>
                   <div className="pt-4 flex justify-center gap-4">
                     {onNavigateTo && (
@@ -464,7 +400,7 @@ export default function PricingPage({
                 </div>
               ) : (
                 <WhopCheckoutEmbed
-                  planId={currentEmbedPlanId}
+                  planId={ltdPlanId}
                   theme="dark"
                   prefill={{
                     email: currentUser?.email || undefined
@@ -475,13 +411,13 @@ export default function PricingPage({
                     borderRadius: 12
                   }}
                   onComplete={(plan_id, receipt_id, result) => {
-                    console.log("[Whop Checkout Successful]:", { plan_id, receipt_id, result });
-                    setCheckoutCompleteReceipt(receipt_id || `rec_${Date.now()}`);
+                    console.log("[LTD Checkout Successful]:", { plan_id, receipt_id, result });
+                    handleLTDSuccess(receipt_id || `rec_ltd_${Date.now()}`);
                   }}
                   fallback={
                     <div className="flex flex-col items-center justify-center py-24 text-center space-y-3">
                       <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                      <p className="text-xs text-slate-400">Connecting to Whop Secure Checkout for plan: {currentEmbedPlanId}...</p>
+                      <p className="text-xs text-slate-400">Connecting to Secure Lifetime Checkout ({ltdPlanId})...</p>
                     </div>
                   }
                 />
@@ -496,18 +432,18 @@ export default function PricingPage({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
           <div className="space-y-2 p-4 bg-slate-900/40 rounded-xl border border-slate-850">
             <ShieldCheck className="w-6 h-6 text-emerald-400 mx-auto" />
-            <h4 className="text-sm font-bold text-white">Whop Buyer Protection</h4>
-            <p className="text-xs text-slate-400">Enterprise SSL encryption and PCI DSS compliant payment handling.</p>
+            <h4 className="text-sm font-bold text-white">14-Day Money-Back Guarantee</h4>
+            <p className="text-xs text-slate-400">Evaluate Magneto Pro with complete peace of mind. Full refund available if it doesn't fit your workflow.</p>
           </div>
           <div className="space-y-2 p-4 bg-slate-900/40 rounded-xl border border-slate-850">
             <Zap className="w-6 h-6 text-indigo-400 mx-auto" />
-            <h4 className="text-sm font-bold text-white">Instant Software Access</h4>
-            <p className="text-xs text-slate-400">Account entitlement and generation credits are activated automatically via webhooks.</p>
+            <h4 className="text-sm font-bold text-white">Instant Software Entitlement</h4>
+            <p className="text-xs text-slate-400">Pay once, your digital lifetime license unlocks in real time directly within your account.</p>
           </div>
           <div className="space-y-2 p-4 bg-slate-900/40 rounded-xl border border-slate-850">
             <Lock className="w-6 h-6 text-purple-400 mx-auto" />
-            <h4 className="text-sm font-bold text-white">Cancel in 1-Click</h4>
-            <p className="text-xs text-slate-400">Zero phone calls or emails required. Cancel immediately in your Whop Customer Hub.</p>
+            <h4 className="text-sm font-bold text-white">Zero Recurring Subscriptions</h4>
+            <p className="text-xs text-slate-400">One-time payment of $79. Never get billed monthly or annually. Lifetime updates included.</p>
           </div>
         </div>
       </section>

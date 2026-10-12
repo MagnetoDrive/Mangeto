@@ -53,13 +53,13 @@ export default function SavedProjects({
         <button 
           onClick={onOpenLanding}
           className="flex items-center gap-3 shrink-0 text-left cursor-pointer hover:opacity-90 transition group"
-          id="btn_mangeto_navbar_home"
-          title="Return to Mangeto Home"
+          id="btn_magneto_navbar_home"
+          title="Return to Magneto Pro Home"
         >
-          <img src="/logo.svg" alt="Mangeto" className="h-8 w-auto shrink-0 group-hover:scale-105 transition" id="mangeto_navbar_logo" />
+          <img src="/logo.svg" alt="Magneto Pro" className="h-8 w-auto shrink-0 group-hover:scale-105 transition" id="magneto_navbar_logo" />
           <div>
             <h2 className="text-base font-extrabold text-slate-100 flex items-center gap-2">
-              Mangeto
+              Magneto <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm">PRO</span>
             </h2>
             <p className="text-xs text-slate-400">Pull attention. Keep it.</p>
           </div>
@@ -136,7 +136,7 @@ export default function SavedProjects({
               onClick={onOpenLanding}
               className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5 shrink-0 cursor-pointer"
               id="btn_header_landing_home"
-              title="View Mangeto Landing Page"
+              title="View Magneto Pro Landing Page"
             >
               <span>Overview</span>
             </button>
@@ -147,12 +147,12 @@ export default function SavedProjects({
               onClick={onOpenPricing}
               className="px-3 py-1.5 bg-indigo-950/70 hover:bg-indigo-900/90 text-indigo-300 hover:text-indigo-200 rounded-md text-xs font-semibold border border-indigo-800/60 transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
               id="btn_header_pricing_mor"
-              title="View Whop Pricing Plans"
+              title="View Lifetime Deal Pricing"
             >
               <CreditCard className="w-3.5 h-3.5 text-indigo-400" />
               <span>Pricing</span>
-              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border border-emerald-500/30">
-                Whop
+              <span className="bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border border-amber-500/30">
+                LTD
               </span>
             </button>
           )}
@@ -162,7 +162,7 @@ export default function SavedProjects({
               onClick={onOpenBilling}
               className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-md text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5 shrink-0 cursor-pointer"
               id="btn_header_billing"
-              title="Manage Whop Subscription & Entitlements"
+              title="Manage Account Entitlements & License"
             >
               <span>Billing</span>
             </button>

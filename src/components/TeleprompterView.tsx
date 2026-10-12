@@ -261,7 +261,7 @@ TARGET DURATION: ${script.spokenSeconds}s (~${formatTime(estimatedSpeakingSecond
 WORD COUNT: ${scriptWordCount} words
 READING GRADE: ${script.readingGrade || "Grade 6"}
 AI NARRATOR: ${AI_VOICES.find(v => v.id === selectedVoiceId)?.label || "Studio AI Voice"}
-PLATFORM: Magneto Pitch & Storyboard Studio
+PLATFORM: Magneto Pro Pitch & Storyboard Studio
 ============================================================
 
 FULL SPOKEN NARRATION SCRIPT:

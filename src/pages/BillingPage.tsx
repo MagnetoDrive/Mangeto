@@ -148,9 +148,10 @@ export default function BillingPage({ onBack, onNavigateTo, currentUser }: Billi
   };
 
   const currentPlan = profileData.planStatus || (currentUser?.isAnonymous ? "Free" : "Free");
-  const isPaid = currentPlan === "Pro" || currentPlan === "Starter";
+  const isLifetime = currentPlan.toLowerCase().includes("lifetime") || profileData.plan === "lifetime";
+  const isPaid = isLifetime || currentPlan === "Pro" || currentPlan === "Starter";
   const used = profileData.projectsUsed ?? 0;
-  const limit = profileData.projectsLimit ?? (currentPlan === "Pro" ? 250 : currentPlan === "Starter" ? 50 : 2);
+  const limit = profileData.projectsLimit ?? (isLifetime || currentPlan === "Pro" ? 250 : currentPlan === "Starter" ? 50 : 2);
   const percentUsed = Math.min(100, Math.round((used / limit) * 100));
 
   return (
@@ -224,14 +225,22 @@ export default function BillingPage({ onBack, onNavigateTo, currentUser }: Billi
               <span className="text-xs font-mono uppercase text-slate-400 tracking-wider">Current Membership</span>
               <div className="flex items-center gap-3 mt-1">
                 <h2 className="text-2xl font-black text-white">
-                  {currentPlan === "Pro" ? "Pro Plan ($49/mo)" : currentPlan === "Starter" ? "Starter Plan ($19/mo)" : "Free Access"}
+                  {isLifetime 
+                    ? "Magneto Pro Lifetime Pass ($79)" 
+                    : currentPlan === "Pro" 
+                      ? "Pro Plan ($49/mo)" 
+                      : currentPlan === "Starter" 
+                        ? "Starter Plan ($19/mo)" 
+                        : "Free Evaluation"}
                 </h2>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border ${
-                  isPaid 
-                    ? "bg-emerald-950/60 border-emerald-700/60 text-emerald-400" 
-                    : "bg-slate-800 border-slate-700 text-slate-300"
+                  isLifetime
+                    ? "bg-amber-950/60 border-amber-500/60 text-amber-300"
+                    : isPaid 
+                      ? "bg-emerald-950/60 border-emerald-700/60 text-emerald-400" 
+                      : "bg-slate-800 border-slate-700 text-slate-300"
                 }`}>
-                  {isPaid ? "Active" : "Trial"}
+                  {isLifetime ? "Lifetime Deal" : isPaid ? "Active" : "Trial"}
                 </span>
               </div>
             </div>
@@ -243,7 +252,7 @@ export default function BillingPage({ onBack, onNavigateTo, currentUser }: Billi
                 id="btn_billing_change_plan"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>{isPaid ? "Change Plan" : "Upgrade Plan"}</span>
+                <span>{isPaid ? "View Pricing / Entitlements" : "Get Lifetime Deal ($79)"}</span>
               </button>
 
               <a
@@ -253,7 +262,7 @@ export default function BillingPage({ onBack, onNavigateTo, currentUser }: Billi
                 className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-semibold text-xs border border-slate-700 transition cursor-pointer flex items-center gap-2"
                 id="btn_manage_subscription_whop"
               >
-                <span>Manage subscription</span>
+                <span>Manage account & billing</span>
                 <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
               </a>
             </div>
@@ -283,11 +292,13 @@ export default function BillingPage({ onBack, onNavigateTo, currentUser }: Billi
               </div>
 
               <p className="text-[10px] text-slate-500">
-                {currentPlan === "Pro" 
-                  ? "250 monthly projects with team seats" 
-                  : currentPlan === "Starter" 
-                    ? "50 monthly projects with solo license" 
-                    : "2 free campaign kits allowed"}
+                {isLifetime
+                  ? "250 monthly projects with permanent lifetime pass"
+                  : currentPlan === "Pro" 
+                    ? "250 monthly projects with team seats" 
+                    : currentPlan === "Starter" 
+                      ? "50 monthly projects with solo license" 
+                      : "2 free campaign kits allowed"}
               </p>
             </div>
 
@@ -295,9 +306,11 @@ export default function BillingPage({ onBack, onNavigateTo, currentUser }: Billi
             <div className="bg-slate-950/50 border border-slate-800 p-4 rounded-xl space-y-2">
               <span className="text-[11px] text-slate-400 uppercase font-mono tracking-wider">Renewal Date</span>
               <div className="text-base font-bold text-slate-100 pt-1">
-                {profileData.renewalDate || "Renews monthly"}
+                {isLifetime ? "Never expires · Lifetime Pass" : (profileData.renewalDate || "Renews monthly")}
               </div>
-              <p className="text-[10px] text-slate-500">Managed and billed through Whop</p>
+              <p className="text-[10px] text-slate-500">
+                {isLifetime ? "Single one-time payment ($79). Zero recurring renewals." : "Managed and billed through Whop"}
+              </p>
             </div>
 
             {/* Customer ID Card */}

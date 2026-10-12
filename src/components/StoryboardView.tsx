@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { StoryboardScene } from "../types";
 
-export type AIModelPreset = "midjourney" | "flux" | "stablediffusion" | "runway";
+export type AIModelPreset = "leonardo" | "flux" | "stablediffusion" | "runway";
 
 interface StoryboardViewProps {
   scenes: StoryboardScene[];
@@ -43,7 +43,7 @@ export default function StoryboardView({
   platform,
   isLoading,
 }: StoryboardViewProps) {
-  const [selectedModel, setSelectedModel] = useState<AIModelPreset>("midjourney");
+  const [selectedModel, setSelectedModel] = useState<AIModelPreset>("leonardo");
   const [copiedSceneId, setCopiedSceneId] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
   const [activeStyles, setActiveStyles] = useState<Record<string, string[]>>({});
@@ -95,9 +95,9 @@ export default function StoryboardView({
     const styleString = styles.length > 0 ? styles.join(", ") : "Cinematic";
 
     switch (model) {
-      case "midjourney": {
-        const ar = getAspectRatioFlag();
-        return `${rawVisual}, shot in style of high-end advertising, ${styleString}, 8k photography, octane render ${ar} --v 6.1 --style raw`;
+      case "leonardo": {
+        const ar = platform === "9:16" ? "portrait 9:16" : platform === "1:1" ? "square 1:1" : "widescreen 16:9";
+        return `Leonardo Photoreal: ${rawVisual}, ${styleString}, cinematic lighting, shot on RED Digital Cinema 35mm lens, hyper-realistic, photorealistic octane render, masterpiece, crisp focus, commercial grade, ${ar} --alchemy --photoreal`;
       }
       case "flux": {
         return `A cinematic high-fidelity photo of ${rawVisual}. ${styleString}, shot on Hasselblad 80mm lens, natural film grain, clean color science, authentic skin tones and studio composition, ${platform} ratio.`;
@@ -142,7 +142,7 @@ export default function StoryboardView({
   const handleDownloadPromptsTxt = () => {
     const content = scenes
       .map((scene, idx) => {
-        const mjPrompt = formatPromptForModel(scene, "midjourney", idx);
+        const leonardoPrompt = formatPromptForModel(scene, "leonardo", idx);
         const fluxPrompt = formatPromptForModel(scene, "flux", idx);
         const sdPrompt = formatPromptForModel(scene, "stablediffusion", idx);
         const runwayPrompt = formatPromptForModel(scene, "runway", idx);
@@ -154,8 +154,8 @@ Overlay Text: ${scene.onScreenText || "N/A"}
 Camera/Avatar: ${scene.avatarDirection || "N/A"}
 Voiceover Script: ${scene.audioDescription || "N/A"}
 
-[Midjourney Preset]:
-${mjPrompt}
+[Leonardo.ai Preset (Free Tier - 150 daily tokens)]:
+${leonardoPrompt}
 
 [Flux.1 Preset]:
 ${fluxPrompt}
@@ -224,7 +224,7 @@ ${runwayPrompt}
             </h3>
           </div>
           <p className="text-xs text-slate-400">
-            Generate production-grade visuals for external AI image & video generators (Midjourney, Flux, SD, Runway).
+            Generate production-grade visuals for external AI image & video generators (Leonardo.ai, Flux, SD, Runway). Free tier friendly!
           </p>
         </div>
 
@@ -233,15 +233,16 @@ ${runwayPrompt}
           <div className="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setSelectedModel("midjourney")}
+              onClick={() => setSelectedModel("leonardo")}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-mono transition flex items-center gap-1.5 cursor-pointer ${
-                selectedModel === "midjourney"
+                selectedModel === "leonardo"
                   ? "bg-indigo-600 text-white shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              <Film className="w-3.5 h-3.5" />
-              Midjourney
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Leonardo.ai</span>
+              <span className="text-[9px] px-1 py-0.2 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30 font-sans font-medium">Free</span>
             </button>
             <button
               type="button"
@@ -318,9 +319,17 @@ ${runwayPrompt}
           <span className="w-2 h-2 rounded-full bg-emerald-400" />
           Target Aspect Ratio: <strong className="text-slate-200">{getPlatformLabel()}</strong>
         </div>
-        <span className="text-[11px] font-mono text-indigo-400 font-semibold bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20">
-          Preset: {selectedModel.toUpperCase()}
-        </span>
+        <div className="flex items-center gap-2">
+          {selectedModel === "leonardo" && (
+            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              150 Daily Free Tokens on Leonardo.ai
+            </span>
+          )}
+          <span className="text-[11px] font-mono text-indigo-400 font-semibold bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20">
+            Preset: {selectedModel.toUpperCase()}
+          </span>
+        </div>
       </div>
 
       {/* Storyboard Prompt Cards */}
@@ -458,6 +467,24 @@ ${runwayPrompt}
                     </p>
                   </div>
                 </div>
+
+                {/* Special Helper for Leonardo.ai: Free Tier guidance & Photoreal mode */}
+                {selectedModel === "leonardo" && (
+                  <div className="bg-emerald-950/20 border border-emerald-500/20 p-2.5 rounded-xl flex items-center justify-between text-[11px] font-mono text-emerald-300">
+                    <span className="truncate pr-2 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span><strong>Leonardo Tip:</strong> Use Photoreal v2 or Kino XL mode. 150 free daily credits apply.</span>
+                    </span>
+                    <a
+                      href="https://app.leonardo.ai"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/40 rounded text-[10px] shrink-0 font-sans font-medium transition cursor-pointer"
+                    >
+                      Open Leonardo.ai ↗
+                    </a>
+                  </div>
+                )}
 
                 {/* Special Helper for Stable Diffusion: Negative Prompt Snippet */}
                 {selectedModel === "stablediffusion" && (

@@ -64,11 +64,11 @@ export default function DiagnosticTestDashboard({
       summary: "Evaluates /api/generate-script-and-plan scene breakdown & prompt texts",
     },
     {
-      id: "prompt_midjourney",
-      name: "Prompt Studio: Midjourney Preset",
+      id: "prompt_leonardo",
+      name: "Prompt Studio: Leonardo.ai Preset (Free Tier)",
       category: "prompts",
       status: "idle",
-      summary: "Validates aspect ratio flags (--ar 9:16), --v 6.1, and style tags",
+      summary: "Validates Leonardo Photoreal keywords, aspect ratios, and alchemy tags",
     },
     {
       id: "prompt_flux",
@@ -218,20 +218,20 @@ export default function DiagnosticTestDashboard({
           break;
         }
 
-        case "prompt_midjourney": {
+        case "prompt_leonardo": {
           const visual = "Cyberpunk high-tech laboratory with glowing holographic charts";
           const styles = ["Photorealistic", "Cinematic 4K"];
-          const prompt = `${visual}, shot in style of high-end advertising, ${styles.join(", ")}, 8k photography, octane render --ar 9:16 --v 6.1 --style raw`;
-          if (!prompt.includes("--ar 9:16") || !prompt.includes("--v 6.1") || !prompt.includes("--style raw")) {
-            throw new Error("Midjourney formatting parameters invalid");
+          const prompt = `Leonardo Photoreal: ${visual}, ${styles.join(", ")}, cinematic lighting, shot on RED Digital Cinema 35mm lens, hyper-realistic, photorealistic octane render, masterpiece, crisp focus, commercial grade, portrait 9:16 --alchemy --photoreal`;
+          if (!prompt.includes("Leonardo Photoreal") || !prompt.includes("portrait 9:16") || !prompt.includes("--photoreal")) {
+            throw new Error("Leonardo.ai formatting parameters invalid");
           }
           const durationMs = Math.round(performance.now() - start);
           updateTest(testId, {
             status: "passed",
             durationMs,
-            summary: "Midjourney format verified with --ar 9:16, --v 6.1, and raw style",
-            requestPayload: { visual, styles },
-            responsePayload: { formattedPrompt: prompt },
+            summary: "Leonardo.ai format verified with Photoreal v2, 9:16 ratio, RED lens, and Alchemy styling (Free tier compatible)",
+            requestPayload: { visual, styles, targetPlatform: "9:16" },
+            responsePayload: { formattedPrompt: prompt, freeTierCreditsRequired: "0 (included in 150 daily credits)" },
           });
           break;
         }
@@ -406,7 +406,7 @@ export default function DiagnosticTestDashboard({
             durationMs,
             summary: "Storyboard strictly outputs pure Prompt Studio cards for 4 AI engines with zero image generation fetches",
             requestPayload: { component: "StoryboardView" },
-            responsePayload: { activeGenerators: ["midjourney", "flux", "stablediffusion", "runway"], legacyCalls: 0 },
+            responsePayload: { activeGenerators: ["leonardo", "flux", "stablediffusion", "runway"], legacyCalls: 0 },
           });
           break;
         }
@@ -449,7 +449,7 @@ export default function DiagnosticTestDashboard({
   });
 
   const handleCopyReport = () => {
-    const report = `# Magneto Deep E2E Diagnostic Report
+    const report = `# Magneto Pro Deep E2E Diagnostic Report
 Generated: ${new Date().toISOString()}
 Target: Production Browser Environment
 Total Tests: ${totalCount} | Passed: ${passedCount} | Failed: ${failedCount} | Avg Latency: ${avgLatency}ms
@@ -475,7 +475,7 @@ ${t.error ? `- Error: ${t.error}` : ""}`
       encodeURIComponent(
         JSON.stringify(
           {
-            reportName: "Magneto Deep E2E Diagnostic Test Results",
+            reportName: "Magneto Pro Deep E2E Diagnostic Test Results",
             timestamp: new Date().toISOString(),
             metrics: { total: totalCount, passed: passedCount, failed: failedCount, avgLatencyMs: avgLatency },
             tests,
@@ -488,7 +488,7 @@ ${t.error ? `- Error: ${t.error}` : ""}`
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute(
       "download",
-      `magneto_e2e_diagnostics_${Date.now()}.json`
+      `magneto_pro_e2e_diagnostics_${Date.now()}.json`
     );
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
@@ -506,7 +506,7 @@ ${t.error ? `- Error: ${t.error}` : ""}`
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                Magneto Deep E2E Diagnostics
+                Magneto Pro Deep E2E Diagnostics
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                   v2.0 Performance & Studio
                 </span>

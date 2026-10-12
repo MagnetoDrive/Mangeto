@@ -29,7 +29,6 @@ import BillingPage from "./pages/BillingPage";
 import ComplianceFooter from "./components/ComplianceFooter";
 import HireDeveloperModal from "./components/HireDeveloperModal";
 import FeedbackWidget from "./components/FeedbackWidget";
-import PricingLandingView from "./components/PricingLandingView";
 import AuthModal from "./components/AuthModal";
 import LandingPage from "./components/LandingPage";
 
@@ -670,19 +669,19 @@ export default function App() {
           { id: "sc_4", timestamp: "45s - 60s", visualPrompt: `Call to action interface with button`, onScreenText: "GET STARTED NOW", avatarDirection: "Nods warmly guiding viewer to link.", audioDescription: "Upbeat crescendo transition.", imageUrl: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=800&q=80" }
         ];
         const fallbackMarketing = {
-          linkedin: `🚀 Struggling with ${concept || "your workflow"}?\n\nHere is how ${audience || "top creators"} are achieving ${outcome || "scale"}:\n\n1. Eliminating friction\n2. Automating execution\n3. Focusing on high-leverage outputs\n\nTry Mangeto today!`,
+          linkedin: `🚀 Struggling with ${concept || "your workflow"}?\n\nHere is how ${audience || "top creators"} are achieving ${outcome || "scale"}:\n\n1. Eliminating friction\n2. Automating execution\n3. Focusing on high-leverage outputs\n\nTry Magneto Pro today!`,
           twitterThread: [
             `1/ Why ${concept || "manual processes"} slow you down (and how to fix it): 🧵`,
             `2/ Most ${audience || "teams"} focus on manual tasks. But automated workflows deliver ${outcome || "speed"}.`,
-            `3/ Ready to level up? Check out Mangeto!`
+            `3/ Ready to level up? Check out Magneto Pro!`
           ],
-          coldEmail: `Subject: Quick question about ${concept || "your setup"}\n\nHi {{FirstName}},\n\nI noticed you are leading operations at {{Company}}. We built a solution that helps you ${outcome || "scale"}.\n\nOpen to a 2-minute look?\n\nBest,\nMangeto Team`,
+          coldEmail: `Subject: Quick question about ${concept || "your setup"}\n\nHi {{FirstName}},\n\nI noticed you are leading operations at {{Company}}. We built a solution that helps you ${outcome || "scale"}.\n\nOpen to a 2-minute look?\n\nBest,\nMagneto Pro Team`,
           landingPageHero: {
             heading: `Transform ${concept || "Your Product"} into High-Converting Output`,
             subheading: `Help ${audience || "your users"} ${outcome || "scale results"} in record time.`,
             cta: "Get Started Free"
           },
-          youtubeDescription: `Discover how ${concept || "Mangeto"} empowers ${audience || "creators"} to ${outcome || "scale"}. Watch now!`
+          youtubeDescription: `Discover how ${concept || "Magneto Pro"} empowers ${audience || "creators"} to ${outcome || "scale"}. Watch now!`
         };
         setScript(fallbackScript);
         setScenes(fallbackScenes);
@@ -1252,23 +1251,18 @@ export default function App() {
             </div>
 
             <div className="space-y-2">
-              <span className="text-[11px] font-mono text-indigo-400 uppercase tracking-wider font-bold">
-                {Math.max(projectsUsed, projects.length) >= (userPlan === "Pro" ? 250 : userPlan === "Starter" ? 50 : 2)
-                  ? `${userPlan} Limit Reached`
-                  : "Unlock Full Video Marketing Kit"}
+              <span className="text-[11px] font-mono text-amber-400 uppercase tracking-wider font-bold">
+                {Math.max(projectsUsed, projects.length) >= (userPlan === "lifetime" || userPlan === "Pro" ? 250 : 2)
+                  ? "Free Campaign Quota Used"
+                  : "Unlock Magneto Pro Lifetime Deal"}
               </span>
               <h3 className="text-xl font-bold text-white">
-                {Math.max(projectsUsed, projects.length) >= (userPlan === "Pro" ? 250 : userPlan === "Starter" ? 50 : 2)
-                  ? "Subscribe to continue generating" 
-                  : "Start trial or subscribe on Whop"}
+                {Math.max(projectsUsed, projects.length) >= 2
+                  ? "Get Lifetime Access to Magneto Pro" 
+                  : "Claim the $79 Lifetime Deal"}
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                {userPlan === "Starter" && Math.max(projectsUsed, projects.length) >= 50
-                  ? "You have reached your 50 projects monthly quota on Starter. Upgrade to Pro ($49/mo) for 250 projects per month and team seats."
-                  : Math.max(projectsUsed, projects.length) >= 2
-                    ? "You have used your 2 free campaign kits. Upgrade to Starter ($19/mo) for 50 projects/mo or Pro ($49/mo) for 250 projects/mo on Whop."
-                    : "Generate viral teleprompter scripts, 4-scene video storyboards, and 5-channel marketing kits. Subscribe on Whop or continue with your free trial."
-                }
+                You have used your 2 free campaign kits. Upgrade to the <strong>Magneto Pro Lifetime Deal ($79 one-time)</strong> for 250 projects per month, Leonardo.ai and external AI prompt studio tools, teleprompter speech sync, and all future updates with zero recurring fees.
               </p>
             </div>
 
@@ -1278,11 +1272,11 @@ export default function App() {
                   setIsSubscribePromptOpen(false);
                   navigateTo('pricing');
                 }}
-                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/20"
-                id="btn_modal_whop_pricing"
+                className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:opacity-95 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/25"
+                id="btn_modal_ltd_pricing"
               >
-                <CreditCard className="w-4 h-4" />
-                <span>View Plans &amp; Subscribe on Whop</span>
+                <Sparkles className="w-4 h-4" />
+                <span>Claim Lifetime Access ($79 One-Time)</span>
               </button>
 
               {Math.max(projectsUsed, projects.length) < (userPlan === "Pro" ? 250 : userPlan === "Starter" ? 50 : 2) && pendingHook && (

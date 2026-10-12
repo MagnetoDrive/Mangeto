@@ -1,10 +1,10 @@
 /**
- * Magneto Deep E2E Test Suite
+ * Magneto Pro Deep E2E Test Suite
  * Comprehensive End-to-End automated testing covering:
  * 1. Server Health & Core APIs
  * 2. AI Hook Generation Engine
  * 3. AI Script & Storyboard Prompt Planning
- * 4. Prompt Studio Formatters (Midjourney, Flux, Stable Diffusion, Runway)
+ * 4. Prompt Studio Formatters (Leonardo.ai, Flux, Stable Diffusion, Runway)
  * 5. Voiceover Audio & SRT/TXT Export Pipelines
  * 6. Database & Storage Resilience (Firestore / SafeStorage)
  * 7. Legacy Image Generation Removal & Decommissioning Verification
@@ -88,7 +88,7 @@ async function testServerHealth() {
     assert(res.ok, `Expected 200 OK but received status ${res.status}`);
     const json: any = await res.json();
     assert(json.status === "ok", `Expected status: "ok", got: ${json.status}`);
-    return `Server status: ${json.status}, service: ${json.service || "Mangeto"}`;
+    return `Server status: ${json.status}, service: ${json.service || "Magneto Pro"}`;
   });
 }
 
@@ -211,18 +211,19 @@ async function testPromptStudioFormatters() {
   const styleTags = ["Photorealistic", "Cinematic 4K", "Studio Lighting"];
   const styleString = styleTags.join(", ");
 
-  await runTest("Prompt Studio", "Midjourney Preset: formats with aspect ratio and parameters", async () => {
+  await runTest("Prompt Studio", "Leonardo.ai Preset: formats with aspect ratio, RED lens, and Alchemy tags", async () => {
     // 9:16 aspect ratio test
-    const arFlag = "--ar 9:16";
-    const prompt = `${sampleScene.visualPrompt}, shot in style of high-end advertising, ${styleString}, 8k photography, octane render ${arFlag} --v 6.1 --style raw`;
+    const arFlag = "portrait 9:16";
+    const prompt = `Leonardo Photoreal: ${sampleScene.visualPrompt}, ${styleString}, cinematic lighting, shot on RED Digital Cinema 35mm lens, hyper-realistic, photorealistic octane render, masterpiece, crisp focus, commercial grade, ${arFlag} --alchemy --photoreal`;
 
-    assert(prompt.includes("--ar 9:16"), "Midjourney prompt missing '--ar 9:16'");
-    assert(prompt.includes("--v 6.1"), "Midjourney prompt missing '--v 6.1'");
-    assert(prompt.includes("--style raw"), "Midjourney prompt missing '--style raw'");
-    assert(prompt.includes(sampleScene.visualPrompt), "Midjourney prompt missing base scene visual");
-    assert(prompt.includes("Photorealistic"), "Midjourney prompt missing style tag");
+    assert(prompt.includes("Leonardo Photoreal:"), "Leonardo prompt missing 'Leonardo Photoreal:' keyword");
+    assert(prompt.includes("portrait 9:16"), "Leonardo prompt missing 'portrait 9:16'");
+    assert(prompt.includes("--photoreal"), "Leonardo prompt missing '--photoreal'");
+    assert(prompt.includes("--alchemy"), "Leonardo prompt missing '--alchemy'");
+    assert(prompt.includes(sampleScene.visualPrompt), "Leonardo prompt missing base scene visual");
+    assert(prompt.includes("Photorealistic"), "Leonardo prompt missing style tag");
 
-    return `Midjourney format verified: "${prompt.slice(0, 75)}..."`;
+    return `Leonardo.ai format verified: "${prompt.slice(0, 75)}..."`;
   });
 
   await runTest("Prompt Studio", "Flux Preset: formats with Hasselblad lens & composition", async () => {
@@ -272,13 +273,13 @@ async function testPromptStudioFormatters() {
 
     const batchText = mockScenes
       .map((sc, idx) => {
-        return `// SCENE ${idx + 1} (${sc.timestamp}) [MIDJOURNEY]\n${sc.visualPrompt}, shot in style of high-end advertising, ${styleString}, 8k photography, octane render --ar 9:16 --v 6.1 --style raw\n`;
+        return `// SCENE ${idx + 1} (${sc.timestamp}) [LEONARDO.AI]\nLeonardo Photoreal: ${sc.visualPrompt}, ${styleString}, cinematic lighting, shot on RED Digital Cinema 35mm lens, hyper-realistic, photorealistic octane render, masterpiece, crisp focus, commercial grade, portrait 9:16 --alchemy --photoreal\n`;
       })
       .join("\n");
 
     assert(batchText.includes("// SCENE 1"), "Batch export missing Scene 1 header");
     assert(batchText.includes("// SCENE 2"), "Batch export missing Scene 2 header");
-    assert(batchText.includes("[MIDJOURNEY]"), "Batch export missing model preset identifier");
+    assert(batchText.includes("[LEONARDO.AI]"), "Batch export missing model preset identifier");
 
     return `Batch formatted ${mockScenes.length} scenes (${batchText.length} characters)`;
   });
@@ -456,7 +457,7 @@ async function testLegacyImageRemoval() {
     assert(!hasFetchGenerateImage, "StoryboardView.tsx still contains calls to /api/generate-image!");
 
     // Assert that StoryboardView provides Prompt Studio presets
-    assert(content.includes("midjourney"), "StoryboardView missing Midjourney preset");
+    assert(content.includes("leonardo"), "StoryboardView missing Leonardo preset");
     assert(content.includes("flux"), "StoryboardView missing Flux preset");
     assert(content.includes("stablediffusion"), "StoryboardView missing Stable Diffusion preset");
     assert(content.includes("runway"), "StoryboardView missing Runway preset");
@@ -479,7 +480,7 @@ async function testLegacyImageRemoval() {
 // ---------------------------------------------------------------------------
 async function main() {
   console.log(`\n\x1b[1m\x1b[35m=================================================================`);
-  console.log(`   🧲 MAGNETO DEEP E2E TEST RUNNER - COMPREHENSIVE VERIFICATION`);
+  console.log(`   🧲 MAGNETO PRO DEEP E2E TEST RUNNER - COMPREHENSIVE VERIFICATION`);
   console.log(`   Target: ${BASE_URL}`);
   console.log(`=================================================================\x1b[0m`);
 

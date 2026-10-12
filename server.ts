@@ -21,7 +21,7 @@ app.use(express.json({
 
 // API Health Check
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", service: "Mangeto" });
+  res.json({ status: "ok", service: "Magneto Pro" });
 });
 
 // Lazy-loaded Gemini AI client
@@ -1041,7 +1041,7 @@ async function generateRealisticSceneVisual(
 }
 
 // 4. ENDPOINT: Storyboard Scene Sketch Generator (DEPRECATED & DISABLED)
-// Image generation has been decommissioned in favor of direct AI prompt cards for Midjourney, Flux, Stable Diffusion, and Runway.
+// Image generation has been decommissioned in favor of direct AI prompt cards for Leonardo.ai (free tier), Flux, Stable Diffusion, and Runway.
 app.post("/api/generate-image", async (req, res) => {
   const { prompt } = req.body || {};
   console.log("[Module generate-image] Request intercepted: Image generation is retired in favor of AI prompt cards.");
@@ -1049,7 +1049,7 @@ app.post("/api/generate-image", async (req, res) => {
     disabled: true,
     retired: true,
     status: "image_generation_disabled",
-    message: "Image generation has been deprecated. Magneto now outputs pure AI prompt cards formatted for Midjourney, Flux, Stable Diffusion, and Runway.",
+    message: "Image generation has been deprecated. Magneto Pro now outputs pure AI prompt cards formatted for Leonardo.ai (free tier friendly), Flux, Stable Diffusion, and Runway.",
     prompt: prompt || "Cinematic video scene prompt"
   });
 });
